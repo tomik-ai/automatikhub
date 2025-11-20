@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AutomatikLabs</title>
     <script>
-      // Polyfill para process.env para evitar crash no navegador
-      if (typeof process === 'undefined') {
+      // Polyfill robusto para process.env para evitar crash em navegadores sem build step adequado
+      if (typeof window !== 'undefined' && typeof process === 'undefined') {
         window.process = { env: {} };
       }
     </script>
@@ -37,5 +37,6 @@
 </head>
   <body class="bg-slate-950 text-slate-100">
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

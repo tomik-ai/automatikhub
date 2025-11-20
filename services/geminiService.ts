@@ -12,8 +12,13 @@ const TOOLS_CONTEXT = MOCK_TOOLS.map(tool =>
 ).join('\n\n---\n\n');
 
 const getApiKey = () => {
+  // Check global process (Node/Build)
   if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
     return process.env.API_KEY;
+  }
+  // Check window.process (Browser Polyfill)
+  if (typeof window !== 'undefined' && (window as any).process && (window as any).process.env && (window as any).process.env.API_KEY) {
+    return (window as any).process.env.API_KEY;
   }
   return null;
 };

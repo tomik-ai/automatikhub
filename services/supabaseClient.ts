@@ -9,8 +9,13 @@ const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 // Helper seguro para ler env vars sem crashar o navegador
 const getEnv = (key: string) => {
-  if (typeof process !== 'undefined' && process.env) {
+  // Check global process (Node/Build)
+  if (typeof process !== 'undefined' && process.env && process.env[key]) {
     return process.env[key];
+  }
+  // Check window.process (Browser Polyfill)
+  if (typeof window !== 'undefined' && (window as any).process && (window as any).process.env && (window as any).process.env[key]) {
+    return (window as any).process.env[key];
   }
   return undefined;
 };
