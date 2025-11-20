@@ -1,45 +1,89 @@
 import React, { useState } from 'react';
 import { Tool, User } from '../types';
-import { Plus, Trash2, X, Check } from 'lucide-react';
+import { Plus, Trash2, X, ExternalLink, Edit2 } from 'lucide-react';
 import { DEPARTMENTS } from '../constants';
 
 interface ToolsDirectoryProps {
   tools: Tool[];
   user: User;
   onAddTool: (tool: Tool) => void;
+  onEditTool: (tool: Tool) => void;
   onDeleteTool: (id: string) => void;
 }
 
-const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool, onDeleteTool }) => {
+const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool, onEditTool, onDeleteTool }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newTool, setNewTool] = useState<Partial<Tool>>({ category: 'Produtividade', iconUrl: '🔗' });
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<Partial<Tool>>({ category: 'Produtividade', iconUrl: '🔗' });
+  
+  // Estado para controlar qual item está em processo de exclusão
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
   const canEdit = user.role === 'admin' || user.role === 'moderator';
 
-  const handleAdd = () => {
-    if (!newTool.name || !newTool.url) {
+  const handleOpenAdd = () => {
+    setFormData({ category: 'Produtividade', iconUrl: '🔗' });
+    setIsEditing(false);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (tool: Tool, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFormData({ ...tool });
+    setIsEditing(true);
+    setIsModalOpen(true);
+  };
+
+  const handleSave = () => {
+    if (!formData.name || !formData.url) {
       alert("Preencha nome e URL");
       return;
     }
-    const tool: Tool = {
-      id: Date.now().toString(),
-      name: newTool.name!,
-      url: newTool.url!,
-      description: newTool.description || '',
-      category: newTool.category as any || 'Produtividade',
-      iconUrl: newTool.iconUrl || '🔗'
-    };
-    onAddTool(tool);
+
+    if (isEditing && formData.id) {
+       const updatedTool: Tool = {
+         ...(formData as Tool),
+         // Garante que os campos obrigatórios estejam presentes
+         id: formData.id,
+         name: formData.name!,
+         url: formData.url!,
+         description: formData.description || '',
+         category: formData.category || 'Produtividade',
+         iconUrl: formData.iconUrl || '🔗'
+       };
+       onEditTool(updatedTool);
+    } else {
+        const tool: Tool = {
+          id: Date.now().toString(),
+          name: formData.name!,
+          url: formData.url!,
+          description: formData.description || '',
+          category: formData.category as any || 'Produtividade',
+          iconUrl: formData.iconUrl || '🔗'
+        };
+        onAddTool(tool);
+    }
+    
     setIsModalOpen(false);
-    setNewTool({ category: 'Produtividade', iconUrl: '🔗' });
+    setFormData({ category: 'Produtividade', iconUrl: '🔗' });
   };
 
-  const handleDeleteClick = (e: React.MouseEvent, id: string) => {
-    e.preventDefault();
+  // Fase 1: Solicitar exclusão (muda o botão)
+  const handleRequestDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm('Tem certeza que deseja remover este card?')) {
-      onDeleteTool(id);
-    }
+    setConfirmingDeleteId(id);
+    
+    // Reseta a confirmação após 3 segundos se não clicar
+    setTimeout(() => {
+      setConfirmingDeleteId(prev => prev === id ? null : prev);
+    }, 3000);
+  };
+
+  // Fase 2: Confirmar e executar
+  const handleConfirmDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDeleteTool(id);
+    setConfirmingDeleteId(null);
   };
 
   return (
@@ -51,7 +95,7 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
         </div>
         {canEdit && (
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenAdd}
             className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors shadow-lg shadow-indigo-500/20"
           >
             <Plus size={18} /> Novo Link
@@ -63,38 +107,68 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
         {tools.map(tool => (
           <div 
             key={tool.id}
-            className="group bg-slate-900 p-6 rounded-xl shadow-lg border border-slate-800 hover:border-indigo-500/50 hover:shadow-indigo-500/10 transition-all flex flex-col relative"
+            className="group bg-slate-900 rounded-xl shadow-lg border border-slate-800 hover:border-indigo-500/50 hover:shadow-indigo-500/10 transition-all flex flex-col relative"
           >
+            {/* Botões de Ação (Editar / Excluir) */}
             {canEdit && (
-              <button 
-                onClick={(e) => handleDeleteClick(e, tool.id)}
-                className="absolute top-4 right-4 p-2 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors z-20"
-                title="Remover Card"
-              >
-                <Trash2 size={18} />
-              </button>
+              <div className="absolute top-3 right-3 z-20 flex gap-2">
+                <button 
+                  onClick={(e) => handleOpenEdit(tool, e)}
+                  className="p-2 bg-slate-950/80 text-slate-400 hover:text-indigo-400 hover:bg-indigo-900/20 border border-slate-700 hover:border-indigo-500/50 rounded-lg transition-all shadow-sm backdrop-blur-sm"
+                  title="Editar Ferramenta"
+                >
+                  <Edit2 size={16} />
+                </button>
+
+                {confirmingDeleteId === tool.id ? (
+                  <button 
+                    type="button"
+                    onClick={(e) => handleConfirmDelete(tool.id, e)}
+                    className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white hover:bg-red-700 border border-red-500 rounded-lg transition-all shadow-md animate-in fade-in zoom-in duration-200"
+                    title="Confirmar Exclusão"
+                  >
+                    <Trash2 size={14} />
+                    <span className="text-xs font-bold uppercase">Confirmar?</span>
+                  </button>
+                ) : (
+                  <button 
+                    type="button"
+                    onClick={(e) => handleRequestDelete(tool.id, e)}
+                    className="p-2 bg-slate-950/80 text-slate-400 hover:text-red-400 hover:bg-red-900/20 border border-slate-700 hover:border-red-500/50 rounded-lg transition-all shadow-sm backdrop-blur-sm"
+                    title="Remover Ferramenta"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
             )}
 
-            <a href={tool.url} target="_blank" rel="noopener noreferrer" className="flex flex-col h-full">
+            {/* Área clicável do card (Conteúdo) */}
+            <div 
+              onClick={() => window.open(tool.url, '_blank')}
+              className="flex flex-col h-full p-6 cursor-pointer"
+            >
               <div className="flex items-start justify-between mb-4">
                 <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-2xl shadow-inner border border-slate-700">
                   {tool.iconUrl}
                 </div>
               </div>
               
-              <h3 className="text-lg font-bold text-white mb-1 group-hover:text-indigo-400 transition-colors">
+              {/* Padding right para o texto não ficar embaixo dos botões de ação */}
+              <h3 className={`text-lg font-bold text-white mb-1 group-hover:text-indigo-400 transition-colors ${canEdit ? 'pr-28' : ''}`}>
                 {tool.name}
               </h3>
-              <p className="text-sm text-slate-400 mb-4 flex-1">
+              <p className="text-sm text-slate-400 mb-4 flex-1 line-clamp-2">
                 {tool.description}
               </p>
               
-              <div className="pt-4 border-t border-slate-800 mt-auto">
+              <div className="pt-4 border-t border-slate-800 mt-auto flex items-center justify-between">
                 <span className="text-xs font-medium px-2 py-1 bg-slate-800 text-slate-400 rounded-md border border-slate-700">
                   {tool.category}
                 </span>
+                <ExternalLink size={14} className="text-slate-600 group-hover:text-indigo-400 transition-colors" />
               </div>
-            </a>
+            </div>
           </div>
         ))}
       </div>
@@ -103,7 +177,7 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-slate-900 rounded-xl w-full max-w-md shadow-2xl border border-slate-800">
             <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white">Novo Link/Ferramenta</h3>
+              <h3 className="text-lg font-bold text-white">{isEditing ? 'Editar Ferramenta' : 'Nova Ferramenta'}</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
             </div>
             <div className="p-6 space-y-4">
@@ -111,8 +185,8 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
                 <label className="block text-sm font-medium text-slate-400 mb-1">Nome</label>
                 <input 
                   type="text" 
-                  value={newTool.name || ''}
-                  onChange={e => setNewTool({...newTool, name: e.target.value})}
+                  value={formData.name || ''}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="Ex: Jira, Slack, etc"
                 />
@@ -121,8 +195,8 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
                 <label className="block text-sm font-medium text-slate-400 mb-1">URL</label>
                 <input 
                   type="text" 
-                  value={newTool.url || ''}
-                  onChange={e => setNewTool({...newTool, url: e.target.value})}
+                  value={formData.url || ''}
+                  onChange={e => setFormData({...formData, url: e.target.value})}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="https://..."
                 />
@@ -131,8 +205,8 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
                 <label className="block text-sm font-medium text-slate-400 mb-1">Descrição</label>
                 <input 
                   type="text" 
-                  value={newTool.description || ''}
-                  onChange={e => setNewTool({...newTool, description: e.target.value})}
+                  value={formData.description || ''}
+                  onChange={e => setFormData({...formData, description: e.target.value})}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="Breve descrição"
                 />
@@ -141,8 +215,8 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
                 <div>
                    <label className="block text-sm font-medium text-slate-400 mb-1">Categoria</label>
                    <select 
-                      value={newTool.category}
-                      onChange={e => setNewTool({...newTool, category: e.target.value as any})}
+                      value={formData.category}
+                      onChange={e => setFormData({...formData, category: e.target.value as any})}
                       className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
@@ -157,18 +231,18 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
                    <input 
                     type="text" 
                     maxLength={2}
-                    value={newTool.iconUrl || ''}
-                    onChange={e => setNewTool({...newTool, iconUrl: e.target.value})}
+                    value={formData.iconUrl || ''}
+                    onChange={e => setFormData({...formData, iconUrl: e.target.value})}
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-center"
                     placeholder="🔗"
                   />
                 </div>
               </div>
               <button 
-                onClick={handleAdd} 
+                onClick={handleSave} 
                 className="w-full bg-indigo-600 hover:bg-indigo-500 py-2.5 rounded-lg text-white font-bold mt-4 transition-colors shadow-lg"
               >
-                Salvar Ferramenta
+                {isEditing ? 'Salvar Alterações' : 'Salvar Ferramenta'}
               </button>
             </div>
           </div>

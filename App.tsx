@@ -187,6 +187,18 @@ const App: React.FC = () => {
     }
   };
 
+  const handleEditTool = async (updatedTool: Tool) => {
+    try {
+      setIsLoadingTools(true);
+      await ToolsService.update(updatedTool);
+      await fetchTools();
+    } catch (error: any) {
+      alert("Erro ao atualizar ferramenta: " + error.message);
+    } finally {
+      setIsLoadingTools(false);
+    }
+  };
+
   const handleDeleteTool = async (id: string) => {
     try {
       setIsLoadingTools(true);
@@ -242,6 +254,7 @@ const App: React.FC = () => {
           tools={tools} 
           user={user}
           onAddTool={handleAddTool}
+          onEditTool={handleEditTool}
           onDeleteTool={handleDeleteTool}
         />;
       case View.AI_ASSISTANT:

@@ -33,6 +33,27 @@ export const ToolsService = {
     return data as Tool;
   },
 
+  update: async (tool: Tool): Promise<Tool> => {
+    const supabase = getSupabase();
+    if (!supabase) throw new Error("Supabase não conectado");
+
+    const { data, error } = await supabase
+      .from('tools')
+      .update({
+        name: tool.name,
+        description: tool.description,
+        url: tool.url,
+        iconUrl: tool.iconUrl,
+        category: tool.category
+      })
+      .eq('id', tool.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Tool;
+  },
+
   delete: async (id: string): Promise<void> => {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase não conectado");
@@ -42,6 +63,12 @@ export const ToolsService = {
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Erro ao deletar ferramenta:", error);
+      if (error.code === '42501') {
+        throw new Error("Permissão negada. Verifique as Policies (RLS) no Supabase para a tabela 'tools'.");
+      }
+      throw error;
+    }
   }
 };
