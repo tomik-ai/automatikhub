@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tool, User } from '../types';
-import { ExternalLink, Plus, Trash2, X, Check } from 'lucide-react';
+import { Plus, Trash2, X, Check } from 'lucide-react';
 import { DEPARTMENTS } from '../constants';
 
 interface ToolsDirectoryProps {
@@ -34,6 +34,14 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
     setNewTool({ category: 'Produtividade', iconUrl: '🔗' });
   };
 
+  const handleDeleteClick = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.confirm('Tem certeza que deseja remover este card?')) {
+      onDeleteTool(id);
+    }
+  };
+
   return (
     <div>
        <div className="mb-8 flex items-end justify-between">
@@ -44,7 +52,7 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
         {canEdit && (
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
+            className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors shadow-lg shadow-indigo-500/20"
           >
             <Plus size={18} /> Novo Link
           </button>
@@ -59,10 +67,11 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
           >
             {canEdit && (
               <button 
-                onClick={() => window.confirm('Excluir ferramenta?') && onDeleteTool(tool.id)}
-                className="absolute top-4 right-4 p-2 text-slate-600 hover:text-red-400 hover:bg-red-900/20 rounded transition-colors z-10"
+                onClick={(e) => handleDeleteClick(e, tool.id)}
+                className="absolute top-4 right-4 p-2 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors z-20"
+                title="Remover Card"
               >
-                <Trash2 size={14} />
+                <Trash2 size={18} />
               </button>
             )}
 
@@ -71,7 +80,6 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
                 <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-2xl shadow-inner border border-slate-700">
                   {tool.iconUrl}
                 </div>
-                <ExternalLink size={18} className="text-slate-600 group-hover:text-indigo-400 transition-colors" />
               </div>
               
               <h3 className="text-lg font-bold text-white mb-1 group-hover:text-indigo-400 transition-colors">
@@ -106,6 +114,7 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
                   value={newTool.name || ''}
                   onChange={e => setNewTool({...newTool, name: e.target.value})}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Ex: Jira, Slack, etc"
                 />
               </div>
               <div>
@@ -115,6 +124,7 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
                   value={newTool.url || ''}
                   onChange={e => setNewTool({...newTool, url: e.target.value})}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="https://..."
                 />
               </div>
               <div>
@@ -124,6 +134,7 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
                   value={newTool.description || ''}
                   onChange={e => setNewTool({...newTool, description: e.target.value})}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Breve descrição"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -149,10 +160,16 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
                     value={newTool.iconUrl || ''}
                     onChange={e => setNewTool({...newTool, iconUrl: e.target.value})}
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-center"
+                    placeholder="🔗"
                   />
                 </div>
               </div>
-              <button onClick={handleAdd} className="w-full bg-indigo-600 py-2 rounded-lg text-white font-bold mt-4">Salvar</button>
+              <button 
+                onClick={handleAdd} 
+                className="w-full bg-indigo-600 hover:bg-indigo-500 py-2.5 rounded-lg text-white font-bold mt-4 transition-colors shadow-lg"
+              >
+                Salvar Ferramenta
+              </button>
             </div>
           </div>
         </div>
