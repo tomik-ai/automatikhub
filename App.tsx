@@ -275,7 +275,10 @@ const App: React.FC = () => {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Mobile Header */}
         <div className="md:hidden bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between z-10">
-          <div className="font-bold text-white">AutomatikHub</div>
+          <div className="flex items-center text-xl tracking-tight">
+            <span className="text-white font-normal">Automatik</span>
+            <span className="text-[#00FEFE] font-semibold">Labs</span>
+          </div>
           <button onClick={() => setSidebarOpen(true)} className="text-slate-300 hover:text-white">
             <Menu size={24} />
           </button>

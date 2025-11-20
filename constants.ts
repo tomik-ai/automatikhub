@@ -3,8 +3,9 @@ import { SOP, Tool, OnboardingStep, Department } from './types';
 export const COMPANY_NAME = "AutomatikLabs";
 export const APP_NAME = "AutomatikLabs";
 
-// TODO: Substitua esta URL pelo link direto da sua imagem de logo (PNG/JPG/SVG)
-export const LOGO_URL = "https://ui-avatars.com/api/?name=A+L&background=6366f1&color=fff&size=128&rounded=true&bold=true&font-size=0.33";
+// TODO: Substitua esta URL pelo link da imagem que você enviou (upload no Supabase ou link público)
+// Usando um placeholder transparente e retangular para simular a logo enviada
+export const LOGO_URL = "https://placehold.co/240x60/transparent/ffffff?text=AutomatikLabs";
 
 export const DEPARTMENTS: Department[] = [
   'Sucesso do Cliente',

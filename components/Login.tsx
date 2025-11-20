@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { User } from '../types';
 import { UserService } from '../services/userService';
 import { StorageService } from '../services/storage';
-import { APP_NAME, LOGO_URL } from '../constants';
 import { ArrowRight, Mail, Lock, Loader2 } from 'lucide-react';
 
 interface LoginProps {
@@ -79,14 +78,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <div className="bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl border border-slate-800 overflow-hidden flex flex-col relative z-10">
         {/* Header */}
         <div className="bg-slate-900 p-8 text-center border-b border-slate-800">
-          <div className="flex justify-center mb-4">
-            <img 
-              src={LOGO_URL} 
-              alt={APP_NAME} 
-              className="w-16 h-16 rounded-xl shadow-lg shadow-indigo-500/30" 
-            />
+          <div className="flex justify-center mb-2">
+            <div className="flex items-center text-4xl tracking-tight">
+              <span className="text-white font-normal">Automatik</span>
+              <span className="text-[#00FEFE] font-semibold">Labs</span>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-1">{APP_NAME}</h1>
           <p className="text-slate-400 text-sm">Área Restrita</p>
         </div>
 

@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, User } from '../types';
-import { APP_NAME, LOGO_URL } from '../constants';
 import { Home, CheckSquare, Book, Wrench, Bot, LogOut, X, Shield, UserCog } from 'lucide-react';
 
 interface SidebarProps {
@@ -43,18 +42,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         flex flex-col h-full
       `}>
-        <div className="p-6 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <img 
-              src={LOGO_URL} 
-              alt={APP_NAME} 
-              className="w-8 h-8 rounded-lg shadow-sm" 
-            />
-            <span className="font-bold text-xl tracking-tight text-white">{APP_NAME}</span>
+        <div className="p-6 flex items-center justify-start border-b border-slate-800 h-[88px]">
+          <div className="flex items-center text-2xl tracking-tight">
+            <span className="text-white font-normal">Automatik</span>
+            <span className="text-[#00FEFE] font-semibold">Labs</span>
           </div>
-          <button onClick={() => setIsOpen(false)} className="md:hidden text-slate-400 hover:text-white">
-            <X size={24} />
-          </button>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
