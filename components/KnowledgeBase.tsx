@@ -111,8 +111,15 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
   };
 
   const handleSave = () => {
-    if (!formData.title || !formData.content) {
-      alert("Preencha título e conteúdo");
+    // Validação de campos obrigatórios
+    const missingFields: string[] = [];
+    if (!formData.title?.trim()) missingFields.push("Título");
+    if (!formData.category) missingFields.push("Categoria");
+    if (!formData.content?.trim()) missingFields.push("Conteúdo");
+    if (!formData.responsible_department) missingFields.push("Setor Responsável");
+
+    if (missingFields.length > 0) {
+      alert(`Por favor, preencha os seguintes campos obrigatórios:\n\n- ${missingFields.join('\n- ')}`);
       return;
     }
 
@@ -505,7 +512,9 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
             
             <div className="p-6 space-y-5">
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">Título</label>
+                <label className="block text-sm font-medium text-slate-400 mb-1">
+                  Título <span className="text-red-500">*</span>
+                </label>
                 <input 
                   type="text" 
                   value={formData.title || ''}
@@ -517,7 +526,9 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
 
               <div className="grid grid-cols-2 gap-4">
                  <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">Categoria</label>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">
+                    Categoria <span className="text-red-500">*</span>
+                  </label>
                   <select 
                     value={formData.category || 'Geral'}
                     onChange={e => setFormData({...formData, category: e.target.value as any})}
@@ -527,7 +538,9 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">Setor Responsável</label>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">
+                    Setor Responsável <span className="text-red-500">*</span>
+                  </label>
                   <select 
                     value={formData.responsible_department || 'Geral'}
                     onChange={e => setFormData({...formData, responsible_department: e.target.value as any})}
@@ -584,7 +597,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
 
               <div className="flex flex-col flex-1 min-h-[300px]">
                 <label className="block text-sm font-medium text-slate-400 mb-1 flex justify-between">
-                   Conteúdo 
+                   <span>Conteúdo <span className="text-red-500">*</span></span>
                    <span className="text-xs text-indigo-400 font-normal flex items-center gap-1"><FileText size={10}/> Markdown Suportado</span>
                 </label>
                 <div className="flex-1 relative">
