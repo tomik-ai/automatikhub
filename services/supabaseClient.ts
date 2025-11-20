@@ -7,11 +7,19 @@ const STORAGE_KEY_KEY = 'automatik_supabase_key';
 const DEFAULT_URL = 'https://vjkqrotltxotdrsnwrco.supabase.co';
 const DEFAULT_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqa3Fyb3RsdHhvdGRyc253cmNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk3MzEsImV4cCI6MjA3OTE3NTczMX0.RYTtbuyBojbtxSgPGJJSv8sLkwkwOJczomRu75k50Fw';
 
+// Helper seguro para ler env vars sem crashar o navegador
+const getEnv = (key: string) => {
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env[key];
+  }
+  return undefined;
+};
+
 export const getSupabaseConfig = () => {
   // Priority: Environment Var -> Local Storage -> Default Hardcoded
   return {
-    url: process.env.SUPABASE_URL || localStorage.getItem(STORAGE_KEY_URL) || DEFAULT_URL,
-    key: process.env.SUPABASE_KEY || localStorage.getItem(STORAGE_KEY_KEY) || DEFAULT_KEY
+    url: getEnv('SUPABASE_URL') || localStorage.getItem(STORAGE_KEY_URL) || DEFAULT_URL,
+    key: getEnv('SUPABASE_KEY') || localStorage.getItem(STORAGE_KEY_KEY) || DEFAULT_KEY
   };
 };
 

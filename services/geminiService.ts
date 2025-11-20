@@ -11,13 +11,22 @@ const TOOLS_CONTEXT = MOCK_TOOLS.map(tool =>
   `Ferramenta: ${tool.name}\nDescrição: ${tool.description}\nCategoria: ${tool.category}\nURL: ${tool.url}`
 ).join('\n\n---\n\n');
 
+const getApiKey = () => {
+  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+    return process.env.API_KEY;
+  }
+  return null;
+};
+
 export const sendMessageToGemini = async (message: string): Promise<string> => {
-  if (!process.env.API_KEY) {
-    return "Erro: API Key não configurada. Por favor verifique as configurações.";
+  const apiKey = getApiKey();
+
+  if (!apiKey) {
+    return "Erro: API Key não configurada. Por favor verifique as configurações ou variáveis de ambiente.";
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: apiKey });
     
     const systemInstruction = `
       Você é o assistente virtual inteligente da AutomatikHub, o portal interno da empresa Automatik.
