@@ -17,6 +17,7 @@ export interface Tool {
   url: string;
   iconUrl: string; // Using a placeholder or emoji char for simplicity
   category: 'Produtividade' | 'Dev' | 'Comunicação' | 'Design' | 'Vendas' | 'Suporte' | 'Marketing';
+  target_department?: Department | 'Geral'; // Control visibility by department
 }
 
 export interface OnboardingStep {

@@ -3,7 +3,7 @@ import { User, UserRole, Department, SOP, View } from '../types';
 import { UserService } from '../services/userService';
 import { SopService } from '../services/sopService';
 import { getSupabaseConfig, saveSupabaseConfig, checkConnection } from '../services/supabaseClient';
-import { Shield, Users, CheckCircle, XCircle, AlertTriangle, Search, Database, Save, RefreshCw, Wifi, WifiOff, UserPlus, UserCog, Trash2, FileText, Clock, RotateCcw, X } from 'lucide-react';
+import { Shield, Users, CheckCircle, XCircle, AlertTriangle, Search, Database, Save, RefreshCw, Wifi, WifiOff, UserPlus, UserCog, Trash2, FileText, Clock, RotateCcw, X, Eye, Edit3 } from 'lucide-react';
 
 interface AdminPanelProps {
   onChangeView?: (view: View) => void;
@@ -106,14 +106,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onChangeView }) => {
 
   const handleSaveConfig = () => {
     saveSupabaseConfig(supabaseUrl, supabaseKey);
-  };
-
-  const formatNameFromEmail = (email: string) => {
-    const namePart = email.split('@')[0];
-    return namePart
-      .split('.')
-      .map(n => n.charAt(0).toUpperCase() + n.slice(1))
-      .join(' ');
   };
 
   const openEditUser = (user: User) => {
@@ -240,6 +232,48 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onChangeView }) => {
       {/* Content Area */}
       {activeTab === 'users' ? (
         <>
+          {/* NÍVEIS DE ACESSO CARDS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+             <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-slate-700/20 rounded-full blur-2xl -mr-4 -mt-4 transition-all group-hover:bg-slate-600/30"></div>
+                <h3 className="text-slate-200 font-bold mb-2 flex items-center gap-2">
+                  <Users size={18} className="text-slate-400" /> Member
+                </h3>
+                <p className="text-xs text-slate-400 mb-2">Nível padrão para todos os colaboradores.</p>
+                <ul className="text-xs text-slate-500 space-y-1">
+                  <li className="flex items-center gap-1"><Eye size={10}/> Visualizar Dashboard e SOPs</li>
+                  <li className="flex items-center gap-1"><Eye size={10}/> Acessar Ferramentas do setor</li>
+                  <li className="flex items-center gap-1 text-red-400"><X size={10}/> Sem acesso de edição</li>
+                </ul>
+             </div>
+             
+             <div className="bg-slate-900 border border-purple-500/30 p-4 rounded-xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-purple-600/20 rounded-full blur-2xl -mr-4 -mt-4 transition-all group-hover:bg-purple-500/30"></div>
+                <h3 className="text-white font-bold mb-2 flex items-center gap-2">
+                  <UserCog size={18} className="text-purple-400" /> Moderator
+                </h3>
+                <p className="text-xs text-slate-400 mb-2">Líderes e gestores de conteúdo.</p>
+                <ul className="text-xs text-slate-400 space-y-1">
+                  <li className="flex items-center gap-1 text-purple-300"><CheckCircle size={10}/> Tudo do nível Member</li>
+                  <li className="flex items-center gap-1"><Edit3 size={10}/> Criar/Editar SOPs e Ferramentas</li>
+                  <li className="flex items-center gap-1 text-red-400"><X size={10}/> Não gerencia usuários</li>
+                </ul>
+             </div>
+
+             <div className="bg-slate-900 border border-indigo-500/30 p-4 rounded-xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-600/20 rounded-full blur-2xl -mr-4 -mt-4 transition-all group-hover:bg-indigo-500/30"></div>
+                <h3 className="text-white font-bold mb-2 flex items-center gap-2">
+                  <Shield size={18} className="text-indigo-400" /> Admin
+                </h3>
+                <p className="text-xs text-slate-400 mb-2">Controle total do sistema.</p>
+                <ul className="text-xs text-slate-400 space-y-1">
+                  <li className="flex items-center gap-1 text-indigo-300"><CheckCircle size={10}/> Acesso irrestrito</li>
+                  <li className="flex items-center gap-1"><Users size={10}/> Adicionar/Remover Usuários</li>
+                  <li className="flex items-center gap-1"><Database size={10}/> Configurar Banco de Dados</li>
+                </ul>
+             </div>
+          </div>
+
           {/* Database Configuration */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">

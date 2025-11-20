@@ -16,7 +16,12 @@ export const ToolsService = {
       return [];
     }
 
-    return data as Tool[];
+    // Map DB snake_case to CamelCase if necessary, though standard setup might be direct
+    return data.map((row: any) => ({
+      ...row,
+      // Ensure fallback for older records
+      target_department: row.target_department || 'Geral' 
+    })) as Tool[];
   },
 
   create: async (tool: Omit<Tool, 'id'>): Promise<Tool> => {
@@ -25,7 +30,14 @@ export const ToolsService = {
 
     const { data, error } = await supabase
       .from('tools')
-      .insert([tool])
+      .insert([{
+        name: tool.name,
+        description: tool.description,
+        url: tool.url,
+        iconUrl: tool.iconUrl,
+        category: tool.category,
+        target_department: tool.target_department || 'Geral'
+      }])
       .select()
       .single();
 
@@ -44,7 +56,8 @@ export const ToolsService = {
         description: tool.description,
         url: tool.url,
         iconUrl: tool.iconUrl,
-        category: tool.category
+        category: tool.category,
+        target_department: tool.target_department
       })
       .eq('id', tool.id)
       .select()

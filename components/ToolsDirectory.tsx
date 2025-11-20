@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Tool, User } from '../types';
-import { Plus, Trash2, X, ExternalLink, Edit2 } from 'lucide-react';
+import { Tool, User, Department } from '../types';
+import { Plus, Trash2, X, ExternalLink, Edit2, Eye, Lock, Search } from 'lucide-react';
 import { DEPARTMENTS } from '../constants';
 
 interface ToolsDirectoryProps {
@@ -14,15 +14,45 @@ interface ToolsDirectoryProps {
 const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool, onEditTool, onDeleteTool }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<Partial<Tool>>({ category: 'Produtividade', iconUrl: '🔗' });
+  const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
+  
+  // Form data includes target_department now
+  const [formData, setFormData] = useState<Partial<Tool>>({ 
+    category: 'Produtividade', 
+    iconUrl: '🔗',
+    target_department: 'Geral' 
+  });
   
   // Estado para controlar qual item está em processo de exclusão
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
   const canEdit = user.role === 'admin' || user.role === 'moderator';
+  
+  const categories = ['Todos', 'Produtividade', 'Dev', 'Comunicação', 'Design', 'Vendas', 'Suporte', 'Marketing'];
+
+  // --- VISIBILITY LOGIC ---
+  // 1. Filter valid tools for this user based on Department Access
+  const allowedTools = tools.filter(tool => {
+    const isAdmin = user.role === 'admin'; // Admins see everything
+    if (isAdmin) return true;
+
+    // If no target specified or target is 'Geral', everyone sees it
+    if (!tool.target_department || tool.target_department === 'Geral') {
+      return true;
+    }
+
+    // Otherwise, only show if user department matches tool target
+    return user.department === tool.target_department;
+  });
+
+  // 2. Filter by Tab Category
+  const filteredTools = allowedTools.filter(tool => {
+    if (selectedCategory === 'Todos') return true;
+    return tool.category === selectedCategory;
+  });
 
   const handleOpenAdd = () => {
-    setFormData({ category: 'Produtividade', iconUrl: '🔗' });
+    setFormData({ category: 'Produtividade', iconUrl: '🔗', target_department: 'Geral' });
     setIsEditing(false);
     setIsModalOpen(true);
   };
@@ -40,32 +70,23 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
       return;
     }
 
+    const commonData = {
+       name: formData.name!,
+       url: formData.url!,
+       description: formData.description || '',
+       category: formData.category || 'Produtividade',
+       iconUrl: formData.iconUrl || '🔗',
+       target_department: formData.target_department || 'Geral'
+    };
+
     if (isEditing && formData.id) {
-       const updatedTool: Tool = {
-         ...(formData as Tool),
-         // Garante que os campos obrigatórios estejam presentes
-         id: formData.id,
-         name: formData.name!,
-         url: formData.url!,
-         description: formData.description || '',
-         category: formData.category || 'Produtividade',
-         iconUrl: formData.iconUrl || '🔗'
-       };
-       onEditTool(updatedTool);
+       onEditTool({ ...commonData, id: formData.id } as Tool);
     } else {
-        const tool: Tool = {
-          id: Date.now().toString(),
-          name: formData.name!,
-          url: formData.url!,
-          description: formData.description || '',
-          category: formData.category as any || 'Produtividade',
-          iconUrl: formData.iconUrl || '🔗'
-        };
-        onAddTool(tool);
+       onAddTool({ ...commonData, id: Date.now().toString() } as Tool);
     }
     
     setIsModalOpen(false);
-    setFormData({ category: 'Produtividade', iconUrl: '🔗' });
+    setFormData({ category: 'Produtividade', iconUrl: '🔗', target_department: 'Geral' });
   };
 
   // Fase 1: Solicitar exclusão (muda o botão)
@@ -88,7 +109,7 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
 
   return (
     <div>
-       <div className="mb-8 flex items-end justify-between">
+       <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white mb-2">Ferramentas & Links</h1>
           <p className="text-slate-400">Acesso rápido aos softwares e links úteis para {user.department || 'a empresa'}.</p>
@@ -103,8 +124,26 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
         )}
       </div>
 
+      {/* Category Filter Tabs */}
+      <div className="flex overflow-x-auto pb-2 md:pb-0 gap-2 mb-8 no-scrollbar">
+        {categories.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            className={`
+              px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
+              ${selectedCategory === cat 
+                ? 'bg-indigo-600 text-white' 
+                : 'bg-slate-900 border border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'}
+            `}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {tools.map(tool => (
+        {filteredTools.map(tool => (
           <div 
             key={tool.id}
             className="group bg-slate-900 rounded-xl shadow-lg border border-slate-800 hover:border-indigo-500/50 hover:shadow-indigo-500/10 transition-all flex flex-col relative"
@@ -152,6 +191,12 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
                 <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-2xl shadow-inner border border-slate-700">
                   {tool.iconUrl}
                 </div>
+                {/* Admin Indicator for limited visibility tools */}
+                {canEdit && tool.target_department && tool.target_department !== 'Geral' && (
+                   <div className="absolute top-4 left-20 bg-slate-800/80 border border-slate-700 px-2 py-1 rounded text-[10px] text-slate-300 flex items-center gap-1">
+                     <Lock size={10} /> Apenas {tool.target_department}
+                   </div>
+                )}
               </div>
               
               {/* Padding right para o texto não ficar embaixo dos botões de ação */}
@@ -171,6 +216,16 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
             </div>
           </div>
         ))}
+
+        {filteredTools.length === 0 && (
+          <div className="col-span-full py-12 text-center">
+            <div className="bg-slate-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-800">
+               <Search size={24} className="text-slate-600" />
+            </div>
+            <p className="text-slate-400">Nenhuma ferramenta encontrada nesta categoria.</p>
+            <p className="text-xs text-slate-600 mt-1">Ou você não tem permissão para visualizá-las.</p>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (
@@ -219,11 +274,13 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
                       onChange={e => setFormData({...formData, category: e.target.value as any})}
                       className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
                       <option value="Produtividade">Produtividade</option>
                       <option value="Dev">Dev</option>
                       <option value="Comunicação">Comunicação</option>
                       <option value="Design">Design</option>
+                      <option value="Vendas">Vendas</option>
+                      <option value="Suporte">Suporte</option>
+                      <option value="Marketing">Marketing</option>
                     </select>
                 </div>
                 <div>
@@ -238,6 +295,24 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
                   />
                 </div>
               </div>
+
+              <div className="border-t border-slate-800 pt-4">
+                <label className="block text-sm font-medium text-indigo-400 mb-1 flex items-center gap-2">
+                  <Lock size={14} /> Visibilidade (Departamento Alvo)
+                </label>
+                <p className="text-xs text-slate-500 mb-2">Quem poderá ver este link? Selecione "Geral" para todos.</p>
+                <select 
+                    value={formData.target_department || 'Geral'}
+                    onChange={e => setFormData({...formData, target_department: e.target.value as any})}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="Geral">Geral (Todos os setores)</option>
+                    {DEPARTMENTS.filter(d => d !== 'Geral').map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+              </div>
+
               <button 
                 onClick={handleSave} 
                 className="w-full bg-indigo-600 hover:bg-indigo-500 py-2.5 rounded-lg text-white font-bold mt-4 transition-colors shadow-lg"
