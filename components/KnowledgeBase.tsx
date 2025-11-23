@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SOP, User } from '../types';
 import { UserService } from '../services/userService';
 import { DEPARTMENTS } from '../constants';
-import { Search, Plus, FileText, Tag, X, Edit2, Trash2, Save, Loader2, Check, AlertTriangle, Building2, Users, Calendar, ArrowRight } from 'lucide-react';
+import { Search, Plus, FileText, Tag, X, Edit2, Trash2, Save, Loader2, Check, AlertTriangle, Building2, Users, Calendar, ArrowRight, Upload } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -176,6 +176,24 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
     }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result;
+      if (typeof text === 'string') {
+        // Replace content with file content
+        setFormData(prev => ({ ...prev, content: text }));
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset input value to allow selecting the same file again if needed
+    e.target.value = '';
+  };
+
   const renderDeleteButton = (id: string, size: number = 14) => {
     const isConfirming = confirmingDeleteId === id;
     const isDeleting = deletingId === id;
@@ -231,6 +249,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
     h1: ({node, ...props}: any) => <h1 className="text-3xl font-bold text-white mt-8 mb-4 pb-2 border-b border-slate-700" {...props} />,
     h2: ({node, ...props}: any) => <h2 className="text-2xl font-semibold text-indigo-400 mt-6 mb-3" {...props} />,
     h3: ({node, ...props}: any) => <h3 className="text-xl font-medium text-slate-200 mt-5 mb-2" {...props} />,
+    p: ({node, ...props}: any) => <p className="mb-4 whitespace-pre-wrap text-slate-300 leading-relaxed" {...props} />,
     ul: ({node, ...props}: any) => <ul className="list-disc pl-6 space-y-1 my-4 text-slate-300" {...props} />,
     ol: ({node, ...props}: any) => <ol className="list-decimal pl-6 space-y-1 my-4 text-slate-300" {...props} />,
     li: ({node, ...props}: any) => <li className="pl-1" {...props} />,
@@ -596,10 +615,29 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
               </div>
 
               <div className="flex flex-col flex-1 min-h-[300px]">
-                <label className="block text-sm font-medium text-slate-400 mb-1 flex justify-between">
-                   <span>Conteúdo <span className="text-red-500">*</span></span>
-                   <span className="text-xs text-indigo-400 font-normal flex items-center gap-1"><FileText size={10}/> Markdown Suportado</span>
-                </label>
+                <div className="flex justify-between items-end mb-2">
+                   <label className="text-sm font-medium text-slate-400">
+                     Conteúdo <span className="text-red-500">*</span>
+                   </label>
+                   
+                   {/* File Upload Button */}
+                   <div>
+                     <input 
+                       type="file" 
+                       id="file-upload" 
+                       accept=".md,.txt" 
+                       className="hidden" 
+                       onChange={handleFileUpload}
+                     />
+                     <label 
+                       htmlFor="file-upload" 
+                       className="cursor-pointer text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors px-2 py-1 hover:bg-indigo-900/20 rounded"
+                     >
+                       <Upload size={12}/> Importar Markdown (.md)
+                     </label>
+                   </div>
+                </div>
+
                 <div className="flex-1 relative">
                   <textarea 
                     value={formData.content || ''}
@@ -608,9 +646,12 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
                     placeholder="# Título Principal&#10;&#10;## Subtítulo&#10;&#10;- Item 1&#10;- Item 2"
                   />
                 </div>
-                <p className="text-[10px] text-slate-500 mt-2">
-                  Dica: Use # para títulos grandes, ## para subtítulos, - para listas, **texto** para negrito.
-                </p>
+                <div className="flex justify-between items-center mt-2">
+                   <p className="text-[10px] text-slate-500">
+                     Dica: Use # para títulos grandes, ## para subtítulos, - para listas, **texto** para negrito.
+                   </p>
+                   <span className="text-[10px] text-slate-500 flex items-center gap-1"><FileText size={10}/> Markdown Suportado</span>
+                </div>
               </div>
 
               <div className="pt-4 flex justify-end gap-3 border-t border-slate-800 mt-4">
