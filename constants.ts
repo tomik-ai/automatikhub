@@ -111,7 +111,7 @@ export const MOCK_TOOLS: Tool[] = [
 
 export const INITIAL_ONBOARDING_STEPS: OnboardingStep[] = [
   { id: '1', title: 'Configurar E-mail Corporativo', description: 'Acesse o Gmail com as credenciais enviadas pelo RH.', completed: true },
-  { id: '2', title: 'Entrar no Grupo do WhatsApp', description: 'Acesse o link na aba de Ferramentas para entrar no grupo geral.', completed: false },
+  { id: '2', title: 'Entrar no Grupo do WhatsApp', description: 'Entre no grupo geral da empresa para avisos e cultura.', completed: false, externalLink: 'https://chat.whatsapp.com/I8s0tklYWFmEug3xtu97AS' },
   { id: '3', title: 'Ler a Cultura e Valores', description: 'Leia o SOP "Cultura e Valores" na base de conhecimento.', completed: false, link: 'knowledge_base' },
   { id: '4', title: 'Configurar Assinatura de E-mail', description: 'Use o gerador de assinaturas da Automatik.', completed: false },
   { id: '5', title: 'Primeira Reunião 1:1', description: 'Agende uma conversa inicial com seu gestor.', completed: false },

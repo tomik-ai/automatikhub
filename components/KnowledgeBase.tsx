@@ -23,6 +23,10 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   
+  // Custom Category State
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [isCustomDepartment, setIsCustomDepartment] = useState(false);
+
   // New state for delete confirmation
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
@@ -58,6 +62,8 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
       responsible_department: 'Geral',
       responsible_users: []
     });
+    setIsCustomCategory(false);
+    setIsCustomDepartment(false);
     setIsCreating(true);
     setIsEditing(false);
   };
@@ -71,6 +77,8 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
       ...sop,
       responsible_users: sop.responsible_users || []
     });
+    setIsCustomCategory(!categories.includes(sop.category));
+    setIsCustomDepartment(!DEPARTMENTS.includes(sop.responsible_department as any));
     setIsEditing(true);
     setIsCreating(false);
     setSelectedSOP(null); 
@@ -534,25 +542,67 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                     Categoria <span className="text-red-500">*</span>
                   </label>
-                  <select 
-                    value={formData.category || 'Geral'}
-                    onChange={e => setFormData({...formData, category: e.target.value as any})}
-                    className="w-full bg-[#020617] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/50 focus:outline-none appearance-none"
-                  >
-                    {categories.filter(c => c !== 'Todos').map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  {isCustomCategory ? (
+                      <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            value={formData.category} 
+                            onChange={e => setFormData({...formData, category: e.target.value as any})}
+                            className="w-full bg-[#020617] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/50 focus:outline-none"
+                            placeholder="Nova Categoria..."
+                          />
+                          <button onClick={() => setIsCustomCategory(false)} className="px-3 bg-slate-800 rounded-lg text-slate-400 hover:text-white"><X size={16}/></button>
+                      </div>
+                  ) : (
+                    <select 
+                        value={formData.category || 'Geral'}
+                        onChange={e => {
+                            if (e.target.value === 'new_custom') {
+                                setIsCustomCategory(true);
+                                setFormData({...formData, category: ''});
+                            } else {
+                                setFormData({...formData, category: e.target.value as any});
+                            }
+                        }}
+                        className="w-full bg-[#020617] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/50 focus:outline-none appearance-none"
+                    >
+                        {categories.filter(c => c !== 'Todos').map(c => <option key={c} value={c}>{c}</option>)}
+                        <option value="new_custom">+ Outro (Criar novo...)</option>
+                    </select>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                     Setor Responsável <span className="text-red-500">*</span>
                   </label>
-                  <select 
-                    value={formData.responsible_department || 'Geral'}
-                    onChange={e => setFormData({...formData, responsible_department: e.target.value as any})}
-                    className="w-full bg-[#020617] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/50 focus:outline-none appearance-none"
-                  >
-                    {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
+                  {isCustomDepartment ? (
+                       <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            value={formData.responsible_department} 
+                            onChange={e => setFormData({...formData, responsible_department: e.target.value as any})}
+                            className="w-full bg-[#020617] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/50 focus:outline-none"
+                            placeholder="Novo Setor..."
+                          />
+                          <button onClick={() => setIsCustomDepartment(false)} className="px-3 bg-slate-800 rounded-lg text-slate-400 hover:text-white"><X size={16}/></button>
+                      </div>
+                  ) : (
+                    <select 
+                        value={formData.responsible_department || 'Geral'}
+                        onChange={e => {
+                            if (e.target.value === 'new_custom') {
+                                setIsCustomDepartment(true);
+                                setFormData({...formData, responsible_department: ''});
+                            } else {
+                                setFormData({...formData, responsible_department: e.target.value as any});
+                            }
+                        }}
+                        className="w-full bg-[#020617] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/50 focus:outline-none appearance-none"
+                    >
+                        {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                        <option value="new_custom">+ Outro (Criar novo...)</option>
+                    </select>
+                  )}
                 </div>
               </div>
 

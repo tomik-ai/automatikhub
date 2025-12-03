@@ -1,6 +1,6 @@
 import React from 'react';
 import { OnboardingStep, View } from '../types';
-import { CheckCircle2, Circle, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Circle, ArrowRight, ExternalLink } from 'lucide-react';
 
 interface OnboardingProps {
   steps: OnboardingStep[];
@@ -66,6 +66,15 @@ const Onboarding: React.FC<OnboardingProps> = ({ steps, onToggleStep, onChangeVi
                     className="mt-3 text-indigo-400 hover:text-indigo-300 text-sm font-medium inline-flex items-center gap-1"
                   >
                     Acessar Documento <ArrowRight size={14} />
+                  </button>
+                )}
+
+                {step.externalLink && !step.completed && (
+                   <button 
+                    onClick={() => window.open(step.externalLink, '_blank')}
+                    className="mt-3 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-bold inline-flex items-center gap-2 transition-colors shadow-lg shadow-green-900/20"
+                  >
+                    Entrar no Grupo <ExternalLink size={14} />
                   </button>
                 )}
               </div>

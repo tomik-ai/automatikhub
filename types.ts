@@ -26,6 +26,7 @@ export interface OnboardingStep {
   description: string;
   completed: boolean;
   link?: string;
+  externalLink?: string; // New field for direct external links (e.g. WhatsApp)
 }
 
 export interface Training {
