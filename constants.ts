@@ -1,11 +1,10 @@
-import { SOP, Tool, OnboardingStep, Department } from './types';
+import { SOP, Tool, OnboardingStep, Department, Training } from './types';
 
 export const COMPANY_NAME = "AutomatikLabs";
 export const APP_NAME = "AutomatikLabs";
 
-// TODO: Substitua esta URL pelo link da imagem que você enviou (upload no Supabase ou link público)
-// Usando um placeholder transparente e retangular para simular a logo enviada
-export const LOGO_URL = "https://placehold.co/240x60/transparent/ffffff?text=AutomatikLabs";
+// Updated with the specific logo URL provided
+export const LOGO_URL = "https://prhiuflqhuvlgqysegjv.supabase.co/storage/v1/object/public/FotosPaginas/LogoATK.png";
 
 export const DEPARTMENTS: Department[] = [
   'Sucesso do Cliente',
@@ -116,4 +115,47 @@ export const INITIAL_ONBOARDING_STEPS: OnboardingStep[] = [
   { id: '3', title: 'Ler a Cultura e Valores', description: 'Leia o SOP "Cultura e Valores" na base de conhecimento.', completed: false, link: 'knowledge_base' },
   { id: '4', title: 'Configurar Assinatura de E-mail', description: 'Use o gerador de assinaturas da Automatik.', completed: false },
   { id: '5', title: 'Primeira Reunião 1:1', description: 'Agende uma conversa inicial com seu gestor.', completed: false },
+];
+
+export const MOCK_TRAININGS: Training[] = [
+  {
+    id: '1',
+    title: 'Bem-vindo à Automatik',
+    description: 'Uma visão geral da nossa missão, visão e como operamos no dia a dia.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', // Placeholder
+    thumbnailUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80',
+    category: 'Onboarding',
+    duration: '10 min',
+    instructor: 'Gabriel Amaral'
+  },
+  {
+    id: '2',
+    title: 'Dominando o ClickUp',
+    description: 'Aprenda como gerenciar suas tarefas, sprints e visualizar o roadmap da empresa.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?auto=format&fit=crop&w=800&q=80',
+    category: 'Ferramentas',
+    duration: '25 min',
+    instructor: 'Alex Lemos'
+  },
+  {
+    id: '3',
+    title: 'Cultura de Vendas',
+    description: 'Nossas técnicas de negociação e como utilizamos o CRM para fechar grandes contratos.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=800&q=80',
+    category: 'Vendas',
+    duration: '40 min',
+    instructor: 'Rafael'
+  },
+  {
+    id: '4',
+    title: 'Segurança da Informação',
+    description: 'Protocolos essenciais para manter os dados da empresa e dos clientes seguros.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=800&q=80',
+    category: 'Tech',
+    duration: '15 min',
+    instructor: 'Tech Team'
+  }
 ];

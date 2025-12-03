@@ -1,5 +1,6 @@
 import { getSupabase } from './supabaseClient';
 import { SOP } from '../types';
+import { MOCK_SOPS } from '../constants';
 
 const mapSopFromDb = (row: any): SOP => {
   // Helper to find a property case-insensitively or check common variants
@@ -24,7 +25,10 @@ export const SopService = {
   
   getAll: async (): Promise<SOP[]> => {
     const supabase = getSupabase();
-    if (!supabase) throw new Error("Supabase não conectado");
+    if (!supabase) {
+        console.warn("Supabase não conectado. Retornando dados de exemplo.");
+        return MOCK_SOPS;
+    }
 
     // We fetch ALL records without filtering by deleted_at in the query
     // This prevents the "column deleted_at does not exist" crash if the schema is incomplete
@@ -33,8 +37,8 @@ export const SopService = {
       .select('*');
       
     if (error) {
-      console.error("Erro ao buscar SOPs:", error);
-      throw error;
+      console.error("Erro ao buscar SOPs (usando fallback):", JSON.stringify(error, null, 2));
+      return MOCK_SOPS;
     }
     
     // We perform filtering and sorting in memory to be robust against schema variations
@@ -46,13 +50,16 @@ export const SopService = {
 
   getDeleted: async (): Promise<SOP[]> => {
     const supabase = getSupabase();
-    if (!supabase) throw new Error("Supabase não conectado");
+    if (!supabase) return [];
 
     const { data, error } = await supabase
       .from('sops')
       .select('*');
 
-    if (error) throw error;
+    if (error) {
+      console.error("Erro ao buscar SOPs deletados:", JSON.stringify(error, null, 2));
+      return [];
+    }
 
     return (data || [])
       .map(mapSopFromDb)
@@ -87,7 +94,7 @@ export const SopService = {
       .single();
 
     if (error) {
-      console.error("Erro ao criar SOP:", error);
+      console.error("Erro ao criar SOP:", JSON.stringify(error, null, 2));
       throw error;
     }
     return mapSopFromDb(data);
@@ -114,7 +121,10 @@ export const SopService = {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Erro ao atualizar SOP:", JSON.stringify(error, null, 2));
+      throw error;
+    }
     return mapSopFromDb(data);
   },
 
@@ -148,8 +158,6 @@ export const SopService = {
          if (!errorCamel) return; // Sucesso no soft delete CamelCase
 
          // --- FALLBACK: HARD DELETE ---
-         // Se chegamos aqui, o banco não tem nenhuma coluna de lixeira.
-         // Para não travar a aplicação do usuário ("Deu ruim"), apagamos o registro fisicamente.
          console.warn("Colunas de Lixeira (deleted_at) não encontradas. Executando exclusão permanente.");
          
          const { error: errorHard } = await supabase
@@ -157,10 +165,13 @@ export const SopService = {
             .delete()
             .eq('id', id);
 
-         if (errorHard) throw errorHard; // Se falhar o hard delete, aí sim lançamos erro
+         if (errorHard) {
+           console.error("Erro ao deletar SOP (Hard Delete):", JSON.stringify(errorHard, null, 2));
+           throw errorHard;
+         }
          
     } else {
-        // Outro tipo de erro (permissão, conexão, RLS, etc)
+        console.error("Erro ao deletar SOP:", JSON.stringify(errorSnake, null, 2));
         throw errorSnake;
     }
   },

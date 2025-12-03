@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SOP, User } from '../types';
 import { UserService } from '../services/userService';
 import { DEPARTMENTS } from '../constants';
-import { Search, Plus, FileText, Tag, X, Edit2, Trash2, Save, Loader2, Check, AlertTriangle, Building2, Users, Calendar, ArrowRight, Upload } from 'lucide-react';
+import { Search, Plus, FileText, Tag, X, Edit2, Trash2, Save, Loader2, Check, AlertTriangle, Building2, Users, Calendar, ArrowRight, Book } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -104,7 +104,6 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
       }
     } catch (error) {
       console.error("Error deleting SOP", error);
-      // Error is handled by parent via alert, but we clear state here
     } finally {
       setDeletingId(null);
     }
@@ -176,24 +175,6 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result;
-      if (typeof text === 'string') {
-        // Replace content with file content
-        setFormData(prev => ({ ...prev, content: text }));
-      }
-    };
-    reader.readAsText(file);
-    
-    // Reset input value to allow selecting the same file again if needed
-    e.target.value = '';
-  };
-
   const renderDeleteButton = (id: string, size: number = 14) => {
     const isConfirming = confirmingDeleteId === id;
     const isDeleting = deletingId === id;
@@ -225,7 +206,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
     return (
       <button 
         onClick={(e) => handleRequestDelete(id, e)} 
-        className={`p-2 bg-slate-800 hover:bg-red-900/30 rounded text-slate-400 hover:text-red-400 transition-colors shadow-sm border border-slate-700`}
+        className={`p-2 bg-slate-800/80 hover:bg-red-900/30 rounded text-slate-400 hover:text-red-400 transition-colors shadow-sm border border-slate-700/50`}
         title="Excluir"
       >
         <Trash2 size={size} />
@@ -243,57 +224,58 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
     return emails.map(email => ({ name: email.split('@')[0], email, avatar: `https://ui-avatars.com/api/?name=${email}&background=random` }));
   };
 
-  // --- COMPONENTS FOR MARKDOWN ---
-  // These custom components fix the issue where Titles/Lists weren't rendering distinctly
   const markdownComponents = {
-    h1: ({node, ...props}: any) => <h1 className="text-3xl font-bold text-white mt-8 mb-4 pb-2 border-b border-slate-700" {...props} />,
-    h2: ({node, ...props}: any) => <h2 className="text-2xl font-semibold text-indigo-400 mt-6 mb-3" {...props} />,
-    h3: ({node, ...props}: any) => <h3 className="text-xl font-medium text-slate-200 mt-5 mb-2" {...props} />,
-    p: ({node, ...props}: any) => <p className="mb-4 whitespace-pre-wrap text-slate-300 leading-relaxed" {...props} />,
+    h1: ({node, ...props}: any) => <h1 className="text-2xl md:text-3xl font-bold text-white mt-8 mb-4 pb-2 border-b border-white/10" {...props} />,
+    h2: ({node, ...props}: any) => <h2 className="text-xl font-bold text-cyan-400 mt-6 mb-3 uppercase tracking-wide" {...props} />,
+    h3: ({node, ...props}: any) => <h3 className="text-lg font-semibold text-violet-300 mt-5 mb-2" {...props} />,
+    p: ({node, ...props}: any) => <p className="mb-4 whitespace-pre-wrap text-slate-300 leading-relaxed font-light" {...props} />,
     ul: ({node, ...props}: any) => <ul className="list-disc pl-6 space-y-1 my-4 text-slate-300" {...props} />,
     ol: ({node, ...props}: any) => <ol className="list-decimal pl-6 space-y-1 my-4 text-slate-300" {...props} />,
     li: ({node, ...props}: any) => <li className="pl-1" {...props} />,
     strong: ({node, ...props}: any) => <strong className="font-bold text-white" {...props} />,
-    blockquote: ({node, ...props}: any) => <blockquote className="border-l-4 border-indigo-500 pl-4 italic text-slate-400 my-4 bg-slate-800/30 p-2 rounded-r" {...props} />,
+    blockquote: ({node, ...props}: any) => <blockquote className="border-l-4 border-cyan-500 pl-4 italic text-slate-400 my-4 bg-slate-800/30 p-4 rounded-r-lg" {...props} />,
     code: ({node, inline, className, children, ...props}: any) => {
        return inline 
-        ? <code className="bg-slate-800 text-indigo-300 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>{children}</code>
-        : <div className="bg-slate-950 border border-slate-800 rounded-lg p-4 my-4 overflow-x-auto"><code className="text-sm font-mono text-slate-300" {...props}>{children}</code></div>
+        ? <code className="bg-slate-900 border border-slate-700 text-cyan-300 px-1.5 py-0.5 rounded text-xs font-mono" {...props}>{children}</code>
+        : <div className="bg-[#020617] border border-slate-800 rounded-lg p-4 my-4 overflow-x-auto"><code className="text-sm font-mono text-slate-300" {...props}>{children}</code></div>
     },
-    table: ({node, ...props}: any) => <div className="overflow-x-auto my-6"><table className="min-w-full border-collapse border border-slate-700" {...props} /></div>,
+    table: ({node, ...props}: any) => <div className="overflow-x-auto my-6 rounded-lg border border-slate-700"><table className="min-w-full border-collapse" {...props} /></div>,
     thead: ({node, ...props}: any) => <thead className="bg-slate-800 text-slate-200" {...props} />,
-    th: ({node, ...props}: any) => <th className="border border-slate-700 px-4 py-2 text-left font-semibold" {...props} />,
-    td: ({node, ...props}: any) => <td className="border border-slate-700 px-4 py-2 text-slate-400" {...props} />,
-    a: ({node, ...props}: any) => <a className="text-indigo-400 hover:underline" target="_blank" rel="noreferrer" {...props} />,
+    th: ({node, ...props}: any) => <th className="border-b border-slate-700 px-4 py-3 text-left font-bold text-xs uppercase tracking-wider" {...props} />,
+    td: ({node, ...props}: any) => <td className="border-b border-slate-800 px-4 py-3 text-sm text-slate-400" {...props} />,
+    a: ({node, ...props}: any) => <a className="text-cyan-400 hover:text-cyan-300 hover:underline transition-colors" target="_blank" rel="noreferrer" {...props} />,
   };
 
   return (
     <div className="h-full flex flex-col">
-      <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white mb-2">Central de Conhecimento</h1>
-          <p className="text-slate-400">Encontre procedimentos operacionais, políticas e guias.</p>
+          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+            <Book size={28} className="text-cyan-500" />
+            CENTRAL DE CONHECIMENTO
+          </h1>
+          <p className="text-slate-400 max-w-2xl font-light">Repositório oficial de inteligência, procedimentos operacionais e políticas.</p>
         </div>
         {canEdit && (
           <button 
             onClick={handleOpenCreate}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors shadow-lg shadow-indigo-500/20"
+            className="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-2.5 rounded-lg font-bold uppercase tracking-wider text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(8,145,178,0.3)] hover:shadow-[0_0_20px_rgba(8,145,178,0.5)]"
           >
-            <Plus size={18} /> Novo Documento
+            <Plus size={16} /> Novo Documento
           </button>
         )}
       </div>
 
       {/* Search and Filter Bar */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="flex flex-col md:flex-row gap-4 mb-8">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input
             type="text"
-            placeholder="Buscar documentos..."
+            placeholder="PESQUISAR PROTOCOLOS..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-slate-500"
+            className="w-full pl-11 pr-4 py-3 bg-[#0B1120] border border-white/10 text-white rounded-lg focus:outline-none focus:border-cyan-500/50 focus:shadow-[0_0_15px_rgba(6,182,212,0.1)] placeholder-slate-600 font-mono text-sm transition-all"
           />
         </div>
         <div className="flex overflow-x-auto pb-2 md:pb-0 gap-2 no-scrollbar">
@@ -302,10 +284,10 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               className={`
-                px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
+                px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all
                 ${selectedCategory === cat 
-                  ? 'bg-indigo-600 text-white' 
-                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'}
+                  ? 'bg-white/10 text-cyan-400 border border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.1)]' 
+                  : 'bg-[#0B1120] border border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10'}
               `}
             >
               {cat}
@@ -321,21 +303,24 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
             key={sop.id}
             onClick={(e) => handleCardClick(sop, e)}
             className={`
-              bg-slate-900 rounded-xl border border-slate-800 p-0 overflow-hidden
-              hover:shadow-xl hover:border-indigo-500/40 transition-all cursor-pointer flex flex-col h-full group relative
+              bg-[#0B1120]/80 backdrop-blur-sm rounded-xl border border-white/5 overflow-hidden group relative flex flex-col h-full
+              hover:border-cyan-500/30 hover:shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all cursor-pointer
               ${deletingId === sop.id ? 'opacity-60 pointer-events-none' : ''}
             `}
           >
+             {/* Glow Effect on Hover */}
+             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+
              {/* Card Header Stripe */}
-             <div className={`h-1.5 w-full 
-                ${sop.category === 'HR' ? 'bg-pink-500' : 
-                  sop.category === 'Tech' ? 'bg-blue-500' :
-                  sop.category === 'Vendas' ? 'bg-green-500' : 'bg-indigo-500'}
+             <div className={`h-1 w-full relative z-10
+                ${sop.category === 'HR' ? 'bg-pink-500 shadow-[0_0_10px_#ec4899]' : 
+                  sop.category === 'Tech' ? 'bg-blue-500 shadow-[0_0_10px_#3b82f6]' :
+                  sop.category === 'Vendas' ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : 'bg-indigo-500 shadow-[0_0_10px_#6366f1]'}
              `} />
 
-            <div className="p-5 flex flex-col flex-1">
-              <div className="flex items-start justify-between mb-3">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+            <div className="p-6 flex flex-col flex-1 relative z-10">
+              <div className="flex items-start justify-between mb-4">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5 border border-white/5 px-2 py-1 rounded bg-white/5">
                   {sop.category}
                 </span>
                 {canEdit && (
@@ -352,30 +337,29 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
                 )}
               </div>
               
-              <h3 className="text-xl font-bold text-white mb-3 group-hover:text-indigo-400 transition-colors leading-tight">
+              <h3 className="text-lg font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors leading-tight">
                 {sop.title}
               </h3>
               
-              {/* Preview uses line-clamp */}
-              <p className="text-slate-400 text-sm mb-4 line-clamp-3 flex-1 leading-relaxed">
+              <p className="text-slate-400 text-sm mb-6 line-clamp-3 flex-1 leading-relaxed font-light">
                 {sop.content.replace(/#/g, '').replace(/\*/g, '')}
               </p>
               
               <div className="flex flex-wrap gap-2 mb-4">
                  {sop.tags.slice(0, 3).map(tag => (
-                   <span key={tag} className="px-2 py-0.5 bg-slate-800/50 text-slate-400 rounded text-[10px] border border-slate-800">
+                   <span key={tag} className="px-2 py-0.5 bg-slate-900/50 text-slate-500 rounded text-[10px] border border-white/5 font-mono">
                      #{tag}
                    </span>
                  ))}
               </div>
 
-              <div className="pt-4 border-t border-slate-800/50 flex items-center justify-between text-xs text-slate-500">
+              <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs text-slate-500 font-mono">
                  <div className="flex items-center gap-2">
                     <Calendar size={12} />
                     <span>{new Date(sop.lastUpdated).toLocaleDateString('pt-BR')}</span>
                  </div>
                  {sop.responsible_department && (
-                   <span className="font-medium text-slate-400">{sop.responsible_department}</span>
+                   <span className="font-bold text-slate-400 uppercase">{sop.responsible_department}</span>
                  )}
               </div>
             </div>
@@ -383,97 +367,97 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
         ))}
         
         {filteredSOPs.length === 0 && (
-          <div className="col-span-full text-center py-16">
-             <div className="bg-slate-900 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-800">
+          <div className="col-span-full py-20 text-center">
+             <div className="bg-[#0B1120] w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/5 shadow-2xl">
                 <Search size={32} className="text-slate-600" />
              </div>
-            <p className="text-slate-400 font-medium">Nenhum documento encontrado.</p>
-            <p className="text-slate-600 text-sm mt-1">Tente buscar por outro termo ou categoria.</p>
+            <h3 className="text-slate-200 font-bold text-lg">Nenhum documento localizado.</h3>
+            <p className="text-slate-500 text-sm mt-2">Verifique os filtros ou tente um termo diferente.</p>
           </div>
         )}
       </div>
 
-      {/* View SOP Modal - REDESIGNED */}
+      {/* View SOP Modal */}
       {selectedSOP && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedSOP(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#020617]/90 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setSelectedSOP(null)}>
           <div 
-            className="bg-slate-950 rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-800 flex flex-col relative"
+            className="bg-[#0B1120] rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10 flex flex-col relative"
             onClick={e => e.stopPropagation()}
           >
             {/* Header Actions */}
-            <div className="sticky top-0 right-0 left-0 bg-slate-950/95 backdrop-blur border-b border-slate-800 px-6 py-4 flex justify-between items-center z-20">
-              <div className="flex items-center gap-2">
-                 <div className={`w-2 h-2 rounded-full 
-                    ${selectedSOP.category === 'HR' ? 'bg-pink-500' : 
-                      selectedSOP.category === 'Tech' ? 'bg-blue-500' :
-                      selectedSOP.category === 'Vendas' ? 'bg-green-500' : 'bg-indigo-500'}
+            <div className="sticky top-0 right-0 left-0 bg-[#0B1120]/95 backdrop-blur border-b border-white/10 px-6 py-4 flex justify-between items-center z-20">
+              <div className="flex items-center gap-3">
+                 <div className={`w-2.5 h-2.5 rounded-full shadow-[0_0_10px_currentColor]
+                    ${selectedSOP.category === 'HR' ? 'bg-pink-500 text-pink-500' : 
+                      selectedSOP.category === 'Tech' ? 'bg-blue-500 text-blue-500' :
+                      selectedSOP.category === 'Vendas' ? 'bg-green-500 text-green-500' : 'bg-indigo-500 text-indigo-500'}
                  `}></div>
-                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{selectedSOP.category}</span>
+                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{selectedSOP.category} / PROTOCOL VIEW</span>
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                  {canEdit && (
-                   <div className="flex items-center gap-1 mr-2 border-r border-slate-800 pr-3">
+                   <div className="flex items-center gap-2 mr-4 border-r border-white/10 pr-6">
                       <button 
                         onClick={(e) => handleOpenEdit(selectedSOP, e)}
-                        className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-indigo-400 transition-colors flex items-center gap-2 text-sm font-medium"
+                        className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs font-bold uppercase tracking-wider"
                       >
-                        <Edit2 size={16} /> Editar
+                        <Edit2 size={14} /> Editar
                       </button>
-                      {renderDeleteButton(selectedSOP.id, 16)}
+                      {renderDeleteButton(selectedSOP.id, 14)}
                    </div>
                  )}
                  <button 
                    onClick={() => setSelectedSOP(null)}
-                   className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors"
+                   className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-colors"
                  >
                    <X size={24} />
                  </button>
               </div>
             </div>
 
-            {/* Main Scrollable Content */}
-            <div className="p-8 md:p-12 max-w-3xl mx-auto w-full">
+            {/* Main Content */}
+            <div className="p-8 md:p-12 max-w-4xl mx-auto w-full">
               
-              {/* Document Header Section */}
-              <header className="mb-10 pb-8 border-b border-slate-800">
-                <h1 className="text-3xl md:text-4xl font-bold text-white mb-6 leading-tight">
+              {/* Document Header */}
+              <header className="mb-12 pb-8 border-b border-white/5">
+                <h1 className="text-3xl md:text-5xl font-bold text-white mb-8 leading-tight tracking-tight">
                   {selectedSOP.title}
                 </h1>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-slate-900/50 p-6 rounded-xl border border-slate-800/50">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-2">
-                      <Building2 size={14} /> Departamento
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-white/5 p-6 rounded-xl border border-white/5 backdrop-blur-sm">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                      <Building2 size={12} /> Departamento
                     </span>
-                    <span className="text-slate-200 font-medium">
-                      {selectedSOP.responsible_department || 'Geral'}
+                    <span className="text-cyan-400 font-bold tracking-wide">
+                      {selectedSOP.responsible_department || 'GERAL'}
                     </span>
                   </div>
                   
-                  <div className="flex flex-col gap-1">
-                     <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-2">
-                      <Calendar size={14} /> Última Atualização
+                  <div className="flex flex-col gap-1.5">
+                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                      <Calendar size={12} /> Última Atualização
                     </span>
-                    <span className="text-slate-200 font-medium">
+                    <span className="text-slate-300 font-mono text-sm">
                       {new Date(selectedSOP.lastUpdated).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </span>
                   </div>
 
                   {(selectedSOP.responsible_users && selectedSOP.responsible_users.length > 0) && (
-                    <div className="sm:col-span-2 flex flex-col gap-2">
-                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                        <Users size={14} /> Colaboradores Responsáveis
+                    <div className="sm:col-span-2 flex flex-col gap-2 pt-2 border-t border-white/5 mt-2">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                        <Users size={12} /> Colaboradores Responsáveis
                       </span>
                       <div className="flex flex-wrap gap-3">
                           {getResponsibleUsers(selectedSOP.responsible_users).map((u: any) => (
-                            <div key={u.email} className="flex items-center gap-2 bg-slate-800 pr-3 rounded-full">
+                            <div key={u.email} className="flex items-center gap-2 bg-[#020617] border border-white/10 pr-3 rounded-full py-1 pl-1">
                               <img 
                                 src={u.avatar || `https://ui-avatars.com/api/?name=${u.email}`} 
                                 alt={u.name}
-                                className="w-8 h-8 rounded-full"
+                                className="w-6 h-6 rounded-full"
                               />
-                              <span className="text-sm text-slate-300 font-medium">{u.name}</span>
+                              <span className="text-xs text-slate-300 font-medium">{u.name}</span>
                             </div>
                           ))}
                       </div>
@@ -483,12 +467,11 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
               </header>
 
               {/* Document Body */}
-              <div className="min-h-[200px]">
-                 {/* Using Custom Markdown Components for better rendering */}
+              <div className="min-h-[200px] text-lg">
                  <ReactMarkdown 
                     remarkPlugins={[remarkGfm]}
                     components={markdownComponents}
-                    className="text-slate-300 leading-relaxed"
+                    className="text-slate-300 leading-relaxed font-light"
                  >
                     {selectedSOP.content}
                  </ReactMarkdown>
@@ -496,15 +479,15 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
 
               {/* Footer Tags */}
               {selectedSOP.tags.length > 0 && (
-                <div className="mt-16 pt-6 border-t border-slate-800">
-                  <div className="flex items-center gap-2 mb-3 text-slate-500 text-sm">
-                    <Tag size={16} />
-                    <span>Tags Relacionadas</span>
+                <div className="mt-16 pt-8 border-t border-white/5">
+                  <div className="flex items-center gap-2 mb-4 text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <Tag size={14} />
+                    <span>Keywords / Tags</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {selectedSOP.tags.map(tag => (
-                      <span key={tag} className="px-3 py-1 bg-slate-900 text-slate-400 hover:text-indigo-400 hover:border-indigo-500/50 border border-slate-800 rounded-full text-sm transition-colors cursor-default">
-                        {tag}
+                      <span key={tag} className="px-3 py-1 bg-white/5 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 border border-white/10 rounded text-xs font-mono transition-colors cursor-default">
+                        #{tag}
                       </span>
                     ))}
                   </div>
@@ -515,55 +498,58 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
         </div>
       )}
 
-      {/* Create/Edit SOP Modal */}
+      {/* Create/Edit Modal */}
       {(isCreating || isEditing) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-slate-900 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-800 flex flex-col">
-            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900 sticky top-0 z-10">
-              <h2 className="text-xl font-bold text-white">{isCreating ? 'Novo Documento' : 'Editar Documento'}</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#020617]/90 backdrop-blur-sm">
+          <div className="bg-[#0B1120] rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl border border-white/10 flex flex-col">
+            <div className="px-6 py-5 border-b border-white/10 flex items-center justify-between bg-[#0B1120] sticky top-0 z-10">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                {isCreating ? <Plus className="text-cyan-500" /> : <Edit2 className="text-cyan-500" />}
+                {isCreating ? 'NOVO PROTOCOLO' : 'EDITAR PROTOCOLO'}
+              </h2>
               <button 
                 onClick={() => { setIsCreating(false); setIsEditing(false); }}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-500 hover:text-white transition-colors"
               >
                 <X size={24} />
               </button>
             </div>
             
-            <div className="p-6 space-y-5">
+            <div className="p-8 space-y-6">
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">
-                  Título <span className="text-red-500">*</span>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  Título do Documento <span className="text-red-500">*</span>
                 </label>
                 <input 
                   type="text" 
                   value={formData.title || ''}
                   onChange={e => setFormData({...formData, title: e.target.value})}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-medium text-lg"
-                  placeholder="Ex: Política de Viagens"
+                  className="w-full bg-[#020617] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 focus:outline-none font-medium text-lg placeholder-slate-700 transition-all"
+                  placeholder="Ex: POLÍTICA DE VIAGENS 2025"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-6">
                  <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                     Categoria <span className="text-red-500">*</span>
                   </label>
                   <select 
                     value={formData.category || 'Geral'}
                     onChange={e => setFormData({...formData, category: e.target.value as any})}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full bg-[#020617] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/50 focus:outline-none appearance-none"
                   >
                     {categories.filter(c => c !== 'Todos').map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-1">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                     Setor Responsável <span className="text-red-500">*</span>
                   </label>
                   <select 
                     value={formData.responsible_department || 'Geral'}
                     onChange={e => setFormData({...formData, responsible_department: e.target.value as any})}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    className="w-full bg-[#020617] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/50 focus:outline-none appearance-none"
                   >
                     {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
@@ -571,10 +557,10 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">Responsáveis pelo SOP</label>
-                <div className="bg-slate-950 border border-slate-800 rounded-lg p-3 max-h-40 overflow-y-auto">
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Responsáveis</label>
+                <div className="bg-[#020617] border border-white/10 rounded-lg p-4 max-h-48 overflow-y-auto custom-scrollbar">
                   {availableUsers.length === 0 ? (
-                    <p className="text-xs text-slate-500 p-2">Nenhum usuário encontrado para selecionar.</p>
+                    <p className="text-xs text-slate-500">Nenhum usuário disponível.</p>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                        {availableUsers.map(u => {
@@ -584,17 +570,17 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
                              key={u.email}
                              onClick={() => toggleResponsibleUser(u.email)}
                              className={`
-                               flex items-center gap-2 p-2 rounded cursor-pointer border transition-all
+                               flex items-center gap-3 p-2 rounded cursor-pointer border transition-all select-none
                                ${isSelected 
-                                 ? 'bg-indigo-900/30 border-indigo-500/50 text-white' 
-                                 : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800'}
+                                 ? 'bg-cyan-900/20 border-cyan-500/50 text-white' 
+                                 : 'bg-[#0B1120] border-white/5 text-slate-400 hover:bg-white/5'}
                              `}
                            >
-                             <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-indigo-500 border-indigo-500' : 'border-slate-600'}`}>
-                               {isSelected && <Check size={12} className="text-white" />}
+                             <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-cyan-500 border-cyan-500' : 'border-slate-600'}`}>
+                               {isSelected && <Check size={10} className="text-[#020617]" />}
                              </div>
                              <img src={u.avatar} className="w-6 h-6 rounded-full" alt="" />
-                             <span className="text-xs truncate flex-1">{u.name}</span>
+                             <span className="text-xs truncate flex-1 font-medium">{u.name}</span>
                            </div>
                          );
                        })}
@@ -604,69 +590,46 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-1">Tags (separadas por vírgula)</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tags</label>
                 <input 
                   type="text" 
                   value={Array.isArray(formData.tags) ? formData.tags.join(', ') : formData.tags || ''}
                   onChange={e => setFormData({...formData, tags: e.target.value as any})}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full bg-[#020617] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/50 focus:outline-none font-mono text-sm"
                   placeholder="rh, financeiro, urgente"
                 />
               </div>
 
-              <div className="flex flex-col flex-1 min-h-[300px]">
-                <div className="flex justify-between items-end mb-2">
-                   <label className="text-sm font-medium text-slate-400">
-                     Conteúdo <span className="text-red-500">*</span>
-                   </label>
-                   
-                   {/* File Upload Button */}
-                   <div>
-                     <input 
-                       type="file" 
-                       id="file-upload" 
-                       accept=".md,.txt" 
-                       className="hidden" 
-                       onChange={handleFileUpload}
-                     />
-                     <label 
-                       htmlFor="file-upload" 
-                       className="cursor-pointer text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors px-2 py-1 hover:bg-indigo-900/20 rounded"
-                     >
-                       <Upload size={12}/> Importar Markdown (.md)
-                     </label>
-                   </div>
-                </div>
-
+              <div className="flex flex-col flex-1 min-h-[400px]">
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex justify-between">
+                   <span>Conteúdo <span className="text-red-500">*</span></span>
+                   <span className="text-[10px] text-cyan-400 font-normal flex items-center gap-1 bg-cyan-900/20 px-2 py-0.5 rounded border border-cyan-500/20">
+                     <FileText size={10}/> MARKDOWN ENABLED
+                   </span>
+                </label>
                 <div className="flex-1 relative">
                   <textarea 
                     value={formData.content || ''}
                     onChange={e => setFormData({...formData, content: e.target.value})}
-                    className="w-full h-full min-h-[300px] bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono text-sm leading-relaxed"
-                    placeholder="# Título Principal&#10;&#10;## Subtítulo&#10;&#10;- Item 1&#10;- Item 2"
+                    className="w-full h-full min-h-[400px] bg-[#020617] border border-white/10 rounded-lg px-5 py-4 text-slate-200 focus:ring-2 focus:ring-cyan-500/50 focus:outline-none font-mono text-sm leading-relaxed custom-scrollbar"
+                    placeholder="# Título Principal&#10;&#10;## Subtítulo&#10;&#10;Escreva o procedimento aqui..."
                   />
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                   <p className="text-[10px] text-slate-500">
-                     Dica: Use # para títulos grandes, ## para subtítulos, - para listas, **texto** para negrito.
-                   </p>
-                   <span className="text-[10px] text-slate-500 flex items-center gap-1"><FileText size={10}/> Markdown Suportado</span>
                 </div>
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-800 mt-4">
+              <div className="pt-6 flex justify-end gap-3 border-t border-white/10 mt-6">
                 <button 
                   onClick={() => { setIsCreating(false); setIsEditing(false); }}
-                  className="px-4 py-2 text-slate-400 hover:text-white font-medium transition-colors"
+                  className="px-6 py-3 text-slate-400 hover:text-white font-bold text-xs uppercase tracking-wider transition-colors"
                 >
                   Cancelar
                 </button>
                 <button 
                   onClick={handleSave}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg font-bold shadow-lg shadow-indigo-900/20 flex items-center gap-2"
+                  className="bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-lg font-bold text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] flex items-center gap-2 transition-all"
                 >
-                  <Save size={18} />
-                  Salvar Documento
+                  <Save size={16} />
+                  Salvar Protocolo
                 </button>
               </div>
             </div>

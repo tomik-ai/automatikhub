@@ -15,114 +15,114 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, recentSOPs, pending
   const isOnboardingComplete = progress === 100;
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-indigo-600 to-cyan-600 rounded-2xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-        
-        {isOnboardingComplete ? (
-          <>
-            <h1 className="text-2xl md:text-3xl font-bold mb-2 relative z-10">Onboarding Concluído! 🚀</h1>
-            <p className="text-indigo-100 max-w-2xl mb-6 relative z-10">
-              Parabéns! Você completou todas as etapas iniciais com sucesso. 
-              Agora você está pronto para explorar nossas ferramentas, documentos e mergulhar na cultura da Automatik.
-            </p>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Welcome Banner - Cyber Style */}
+      <div className="relative group rounded-2xl p-px overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-violet-500 to-fuchsia-500 opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
+        <div className="relative bg-[#020617]/90 backdrop-blur-xl rounded-2xl p-8 overflow-hidden">
+          {/* Grid Background Effect */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none" 
+               style={{ backgroundImage: 'linear-gradient(#334155 1px, transparent 1px), linear-gradient(90deg, #334155 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
+          </div>
+          
+          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2 text-white tracking-tight">
+                {isOnboardingComplete ? 'Sistema Operacional Pronto.' : 'Inicializando Protocolos.'}
+              </h1>
+              <p className="text-slate-400 max-w-xl text-sm md:text-base leading-relaxed">
+                {isOnboardingComplete 
+                  ? 'Todos os módulos de onboarding foram carregados com sucesso. Acesso total liberado.' 
+                  : 'Complete as etapas de verificação para liberar acesso total às ferramentas da Automatik.'}
+              </p>
+            </div>
+            
             <button 
-              onClick={() => onChangeView(View.TOOLS)}
-              className="relative z-10 bg-white text-indigo-600 px-5 py-2.5 rounded-lg font-semibold shadow-sm hover:bg-indigo-50 transition-colors inline-flex items-center gap-2"
+              onClick={() => onChangeView(isOnboardingComplete ? View.TOOLS : View.ONBOARDING)}
+              className="bg-cyan-500 hover:bg-cyan-400 text-[#020617] px-6 py-3 rounded-lg font-bold shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] transition-all flex items-center gap-2 uppercase tracking-wide text-xs focus:outline-none focus:ring-0"
             >
-              Explorar Ferramentas
-              <ArrowRight size={18} />
+              {isOnboardingComplete ? 'Acessar Ferramentas' : 'Continuar Setup'}
+              <ArrowRight size={16} />
             </button>
-          </>
-        ) : (
-          <>
-            <h1 className="text-2xl md:text-3xl font-bold mb-2 relative z-10">Olá, bem-vindo à Automatik! 👋</h1>
-            <p className="text-indigo-100 max-w-2xl mb-6 relative z-10">
-              Estamos felizes em ter você no time. Este é o seu centro de comando. 
-              Aqui você encontra tudo para começar sua jornada com o pé direito.
-            </p>
-            <button 
-              onClick={() => onChangeView(View.ONBOARDING)}
-              className="relative z-10 bg-white text-indigo-600 px-5 py-2.5 rounded-lg font-semibold shadow-sm hover:bg-indigo-50 transition-colors inline-flex items-center gap-2"
-            >
-              Continuar Onboarding
-              <ArrowRight size={18} />
-            </button>
-          </>
-        )}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Onboarding Progress Card */}
-        <div className="bg-slate-900 rounded-xl shadow-lg border border-slate-800 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-lg text-white flex items-center gap-2">
-              <Calendar size={20} className="text-indigo-400" />
-              Seu Progresso
+        <div className="bg-[#0B1120] rounded-xl border border-white/5 p-6 backdrop-blur-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-transparent"></div>
+          
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-bold text-sm text-slate-200 uppercase tracking-widest flex items-center gap-2">
+              <Calendar size={16} className="text-indigo-500" />
+              ONBOARDING
             </h2>
-            <span className={`text-xs font-bold px-2 py-1 rounded-full border ${isOnboardingComplete ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'}`}>
+            <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${isOnboardingComplete ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'}`}>
               {progress}%
             </span>
           </div>
-          <div className="w-full bg-slate-800 rounded-full h-2.5 mb-4">
+          
+          <div className="w-full bg-slate-800/50 rounded-full h-1.5 mb-6 overflow-hidden">
             <div 
-              className={`h-2.5 rounded-full transition-all duration-1000 ${isOnboardingComplete ? 'bg-green-500' : 'bg-indigo-500'}`} 
+              className={`h-full shadow-[0_0_10px_currentColor] transition-all duration-1000 ease-out ${isOnboardingComplete ? 'bg-green-500 text-green-500' : 'bg-indigo-500 text-indigo-500'}`} 
               style={{ width: `${progress}%` }}
             ></div>
           </div>
           
           {isOnboardingComplete ? (
-            <div className="text-center py-4">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-900/20 text-green-400 mb-2">
-                <CheckCircle size={24} />
-              </div>
-              <p className="text-sm text-slate-300 font-medium">Todas as tarefas concluídas!</p>
+            <div className="text-center py-6 bg-green-500/5 rounded-lg border border-green-500/10 border-dashed">
+              <CheckCircle size={32} className="text-green-500 mx-auto mb-2 opacity-80" />
+              <p className="text-xs text-green-400 font-bold uppercase tracking-wide">Checklist Completo</p>
             </div>
           ) : (
-            <>
-              <p className="text-sm text-slate-400 mb-4">
-                Você completou {totalSteps - incompleteSteps} de {totalSteps} tarefas essenciais.
-              </p>
-              <ul className="space-y-3">
-                {pendingSteps.filter(s => !s.completed).slice(0, 3).map(step => (
-                  <li key={step.id} className="flex items-start gap-3 text-sm text-slate-300">
-                    <div className="min-w-[16px] h-4 mt-0.5 rounded-full border-2 border-slate-600" />
-                    <span className="line-clamp-1">{step.title}</span>
-                  </li>
-                ))}
-              </ul>
-            </>
+            <ul className="space-y-3">
+              {pendingSteps.filter(s => !s.completed).map(step => (
+                <li key={step.id} className="flex items-start gap-3 text-sm text-slate-400 group cursor-default">
+                  <div className="min-w-[8px] h-2 mt-1.5 rounded-full bg-slate-700 group-hover:bg-indigo-500 transition-colors shadow-[0_0_5px_rgba(99,102,241,0)] group-hover:shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+                  <span className="group-hover:text-slate-200 transition-colors font-medium text-xs leading-relaxed">{step.title}</span>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
 
         {/* Recent Updates / SOPs */}
-        <div className="bg-slate-900 rounded-xl shadow-lg border border-slate-800 p-6 lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-lg text-white flex items-center gap-2">
-              <FileText size={20} className="text-indigo-400" />
-              Documentos Recentes
+        <div className="bg-[#0B1120] rounded-xl border border-white/5 p-6 backdrop-blur-sm lg:col-span-2 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-full h-1 bg-gradient-to-l from-cyan-500 to-transparent"></div>
+          
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-bold text-sm text-slate-200 uppercase tracking-widest flex items-center gap-2">
+              <FileText size={16} className="text-cyan-500" />
+              Novos Arquivos
             </h2>
             <button 
               onClick={() => onChangeView(View.KNOWLEDGE_BASE)}
-              className="text-sm text-indigo-400 hover:text-indigo-300 font-medium"
+              className="text-[10px] font-bold uppercase tracking-wider text-cyan-500 hover:text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/10 px-3 py-1 rounded transition-all focus:outline-none focus:ring-0"
             >
-              Ver todos
+              Acessar Database
             </button>
           </div>
+          
           <div className="grid gap-4 sm:grid-cols-2">
             {recentSOPs.slice(0, 4).map(sop => (
               <div 
                 key={sop.id} 
-                className="p-4 rounded-lg border border-slate-800 bg-slate-950 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/10 transition-all cursor-pointer group"
+                className="group p-4 rounded-lg bg-white/5 border border-white/5 hover:border-cyan-500/30 hover:bg-white/10 transition-all cursor-pointer relative overflow-hidden focus:outline-none focus:ring-0"
                 onClick={() => onChangeView(View.KNOWLEDGE_BASE)}
               >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider group-hover:text-indigo-400 transition-colors">{sop.category}</span>
-                  <ExternalLink size={14} className="text-slate-600 group-hover:text-indigo-400" />
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                
+                <div className="flex justify-between items-start mb-2 relative z-10">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider group-hover:text-cyan-400 transition-colors">
+                    [{sop.category}]
+                  </span>
+                  <ExternalLink size={12} className="text-slate-600 group-hover:text-cyan-400 transition-colors" />
                 </div>
-                <h3 className="font-medium text-slate-200 mb-1 group-hover:text-white">{sop.title}</h3>
-                <p className="text-xs text-slate-500">Atualizado em {new Date(sop.lastUpdated).toLocaleDateString('pt-BR')}</p>
+                <h3 className="font-semibold text-slate-200 text-sm mb-1 group-hover:text-white truncate relative z-10">{sop.title}</h3>
+                <p className="text-[10px] text-slate-500 font-mono relative z-10">
+                  UPDATED: {new Date(sop.lastUpdated).toLocaleDateString('pt-BR')}
+                </p>
               </div>
             ))}
           </div>
@@ -133,38 +133,43 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, recentSOPs, pending
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
          <div 
            onClick={() => window.open('https://chat.whatsapp.com/I8s0tklYWFmEug3xtu97AS', '_blank')}
-           className="bg-slate-900 p-4 rounded-xl shadow-lg border border-slate-800 hover:border-green-500/50 hover:shadow-green-500/10 transition-all cursor-pointer flex items-center gap-3 group"
+           className="bg-[#0B1120] p-4 rounded-xl border border-white/5 hover:border-green-500/50 transition-all cursor-pointer flex items-center gap-4 group backdrop-blur-sm relative overflow-hidden focus:outline-none"
          >
-           <div className="w-10 h-10 rounded-lg bg-green-900/20 flex items-center justify-center text-green-500 group-hover:text-green-400 group-hover:bg-green-900/30 transition-colors">
-             <MessageCircle size={24} />
+           <div className="absolute inset-0 bg-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+           <div className="w-10 h-10 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500 shadow-[0_0_10px_rgba(34,197,94,0.1)] group-hover:shadow-[0_0_15px_rgba(34,197,94,0.3)] transition-all">
+             <MessageCircle size={20} />
            </div>
-           <div>
-             <p className="font-semibold text-slate-200 group-hover:text-white">WhatsApp</p>
-             <p className="text-xs text-slate-500">Grupo Geral</p>
+           <div className="relative z-10">
+             <p className="font-bold text-sm text-slate-200 group-hover:text-white tracking-wide">WHATSAPP</p>
+             <p className="text-[10px] text-slate-500 uppercase tracking-wider">Comunicação</p>
            </div>
          </div>
+         
          <div 
            onClick={() => window.open('https://app.clickup.com/9013437304/home', '_blank')}
-           className="bg-slate-900 p-4 rounded-xl shadow-lg border border-slate-800 hover:border-purple-500/50 hover:shadow-purple-500/10 transition-all cursor-pointer flex items-center gap-3 group"
+           className="bg-[#0B1120] p-4 rounded-xl border border-white/5 hover:border-violet-500/50 transition-all cursor-pointer flex items-center gap-4 group backdrop-blur-sm relative overflow-hidden focus:outline-none"
          >
-           <div className="w-10 h-10 rounded-lg bg-purple-900/20 flex items-center justify-center text-purple-500 group-hover:text-purple-400 group-hover:bg-purple-900/30 transition-colors">
-             <Target size={24} />
+           <div className="absolute inset-0 bg-violet-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+           <div className="w-10 h-10 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.1)] group-hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all">
+             <Target size={20} />
            </div>
-           <div>
-             <p className="font-semibold text-slate-200 group-hover:text-white">ClickUp</p>
-             <p className="text-xs text-slate-500">Gestão de Projetos</p>
+           <div className="relative z-10">
+             <p className="font-bold text-sm text-slate-200 group-hover:text-white tracking-wide">CLICKUP</p>
+             <p className="text-[10px] text-slate-500 uppercase tracking-wider">Gestão</p>
            </div>
          </div>
+         
          <div 
            onClick={() => onChangeView(View.AI_ASSISTANT)}
-           className="bg-slate-900 p-4 rounded-xl shadow-lg border border-slate-800 hover:border-indigo-500/50 hover:shadow-indigo-500/10 transition-all cursor-pointer flex items-center gap-3 md:col-span-2 group"
+           className="bg-[#0B1120] p-4 rounded-xl border border-white/5 hover:border-cyan-500/50 transition-all cursor-pointer flex items-center gap-4 md:col-span-2 group backdrop-blur-sm relative overflow-hidden focus:outline-none"
          >
-           <div className="w-10 h-10 rounded-lg bg-indigo-900/20 flex items-center justify-center text-indigo-500 group-hover:text-indigo-400 group-hover:bg-indigo-900/30 transition-colors">
-             <Bot size={24} />
+           <div className="absolute inset-0 bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+           <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.1)] group-hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all">
+             <Bot size={20} />
            </div>
-           <div>
-             <p className="font-semibold text-slate-200 group-hover:text-white">Precisa de ajuda?</p>
-             <p className="text-xs text-slate-500">Pergunte ao Automatik AI sobre processos</p>
+           <div className="relative z-10">
+             <p className="font-bold text-sm text-slate-200 group-hover:text-white tracking-wide">AUTOMATIK AI</p>
+             <p className="text-[10px] text-slate-500 uppercase tracking-wider">Assistente Inteligente</p>
            </div>
          </div>
       </div>

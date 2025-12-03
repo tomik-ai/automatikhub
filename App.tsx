@@ -6,6 +6,7 @@ import KnowledgeBase from './components/KnowledgeBase';
 import ToolsDirectory from './components/ToolsDirectory';
 import AiAssistant from './components/AiAssistant';
 import AdminPanel from './components/AdminPanel';
+import TrainingHub from './components/TrainingHub';
 import Login from './components/Login';
 import { View, OnboardingStep, User, SOP, Tool } from './types';
 import { StorageService } from './services/storage';
@@ -13,6 +14,7 @@ import { SopService } from './services/sopService';
 import { OnboardingService } from './services/onboardingService';
 import { ToolsService } from './services/toolsService';
 import { Menu, Loader2 } from 'lucide-react';
+import { LOGO_URL } from './constants';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -31,8 +33,6 @@ const App: React.FC = () => {
     if (!isBackground) setIsLoadingSops(true);
     try {
       const data = await SopService.getAll();
-      // Comparação simples para evitar re-render desnecessário se os dados forem idênticos poderia ser feita aqui,
-      // mas o React lida bem com isso na renderização da lista.
       setSops(data);
     } catch (error) {
       console.error("Failed to fetch SOPs", error);
@@ -78,12 +78,10 @@ const App: React.FC = () => {
     let interval: ReturnType<typeof setInterval>;
 
     if (user && currentView === View.KNOWLEDGE_BASE) {
-      // Atualiza SOPs a cada 5 segundos se estiver na tela de documentos
       interval = setInterval(() => {
-        fetchSops(true); // true = background refresh (sem loading spinner)
+        fetchSops(true); 
       }, 5000);
     } else if (user && currentView === View.TOOLS) {
-      // Atualiza Ferramentas a cada 10 segundos se estiver na tela de ferramentas
       interval = setInterval(() => {
         fetchTools(true);
       }, 10000);
@@ -123,12 +121,10 @@ const App: React.FC = () => {
     );
     setOnboardingSteps(newSteps);
 
-    // Backend Call
     try {
       await OnboardingService.toggleStep(user.email, id, step.completed);
     } catch (error) {
       console.error("Erro ao salvar passo", error);
-      // Revert on failure
       setOnboardingSteps(onboardingSteps);
     }
   };
@@ -137,7 +133,6 @@ const App: React.FC = () => {
   const handleAddSOP = async (newSOP: SOP) => {
     try {
       setIsLoadingSops(true);
-      // Omitimos o ID para que o serviço/banco gere
       const { id, ...sopPayload } = newSOP;
       await SopService.create(sopPayload as any);
       await fetchSops(); 
@@ -231,7 +226,7 @@ const App: React.FC = () => {
         if (isLoadingSops && sops.length === 0) {
           return (
             <div className="flex items-center justify-center h-64">
-              <Loader2 className="animate-spin text-indigo-500" size={48} />
+              <Loader2 className="animate-spin text-cyan-500" size={48} />
             </div>
           );
         }
@@ -246,7 +241,7 @@ const App: React.FC = () => {
         if (isLoadingTools && tools.length === 0) {
           return (
              <div className="flex items-center justify-center h-64">
-              <Loader2 className="animate-spin text-indigo-500" size={48} />
+              <Loader2 className="animate-spin text-cyan-500" size={48} />
             </div>
           );
         }
@@ -257,6 +252,8 @@ const App: React.FC = () => {
           onEditTool={handleEditTool}
           onDeleteTool={handleDeleteTool}
         />;
+      case View.TRAINING:
+        return <TrainingHub />;
       case View.AI_ASSISTANT:
         return <AiAssistant />;
       case View.ADMIN:
@@ -275,7 +272,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden">
+    <div className="flex h-screen bg-[#020617] text-slate-100 overflow-hidden font-sans">
       <Sidebar 
         currentView={currentView} 
         onChangeView={setCurrentView}
@@ -287,19 +284,16 @@ const App: React.FC = () => {
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Mobile Header */}
-        <div className="md:hidden bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between z-10">
-          <div className="flex items-center text-xl tracking-tight">
-            <span className="text-white font-normal">Automatik</span>
-            <span className="text-[#00FEFE] font-semibold">Labs</span>
-          </div>
+        <div className="md:hidden bg-[#020617]/90 backdrop-blur-md border-b border-white/5 p-4 flex items-center justify-between z-10 sticky top-0">
+          <img src={LOGO_URL} alt="AutomatikLabs" className="h-8 w-auto object-contain" />
           <button onClick={() => setSidebarOpen(true)} className="text-slate-300 hover:text-white">
             <Menu size={24} />
           </button>
         </div>
 
         {/* Main Content Scrollable Area */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
-          <div className="max-w-7xl mx-auto w-full">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth custom-scrollbar">
+          <div className="max-w-[1600px] mx-auto w-full">
             {renderContent()}
           </div>
         </div>

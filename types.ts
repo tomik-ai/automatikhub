@@ -28,11 +28,23 @@ export interface OnboardingStep {
   link?: string;
 }
 
+export interface Training {
+  id: string;
+  title: string;
+  description: string;
+  videoUrl: string; // Embed URL or Link
+  thumbnailUrl: string;
+  category: string;
+  duration: string;
+  instructor?: string;
+}
+
 export enum View {
   DASHBOARD = 'dashboard',
   ONBOARDING = 'onboarding',
   KNOWLEDGE_BASE = 'knowledge_base',
   TOOLS = 'tools',
+  TRAINING = 'training',
   AI_ASSISTANT = 'ai_assistant',
   ADMIN = 'admin'
 }

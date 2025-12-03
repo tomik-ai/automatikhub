@@ -1,10 +1,14 @@
 import { getSupabase } from './supabaseClient';
 import { Tool } from '../types';
+import { MOCK_TOOLS } from '../constants';
 
 export const ToolsService = {
   getAll: async (): Promise<Tool[]> => {
     const supabase = getSupabase();
-    if (!supabase) return [];
+    if (!supabase) {
+        console.warn("Supabase não conectado. Retornando ferramentas de exemplo.");
+        return MOCK_TOOLS;
+    }
 
     const { data, error } = await supabase
       .from('tools')
@@ -12,8 +16,15 @@ export const ToolsService = {
       .order('name', { ascending: true });
 
     if (error) {
-      console.error('Erro ao buscar ferramentas:', JSON.stringify(error, null, 2));
-      return [];
+      console.error('Erro ao buscar ferramentas (usando fallback):', JSON.stringify(error, null, 2));
+      return MOCK_TOOLS;
+    }
+
+    if (!data || data.length === 0) {
+        // Se retornar vazio do banco, podemos retornar vazio mesmo.
+        // Mas se quiser garantir que o usuário veja algo no início:
+        // return MOCK_TOOLS;
+        return [];
     }
 
     // Map DB snake_case to CamelCase if necessary
