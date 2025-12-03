@@ -1,13 +1,27 @@
+
 export interface SOP {
   id: string;
   title: string;
   category: 'HR' | 'Tech' | 'Vendas' | 'Operacional' | 'Geral';
-  content: string;
+  content: string; // For Processes, this is the "Step by Step Description"
   lastUpdated: string;
   tags: string[];
   deleted_at?: string | null;
   responsible_department?: Department;
   responsible_users?: string[]; // Array of emails
+  
+  // New fields for Process Management
+  type: 'standard' | 'process';
+  process_details?: ProcessDetails;
+}
+
+export interface ProcessDetails {
+  objective: string;
+  scope_includes: string;
+  scope_excludes: string;
+  materials: string;
+  metrics: string;
+  created_by?: string; // Manual text field or auto-filled
 }
 
 export interface Tool {

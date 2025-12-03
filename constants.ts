@@ -38,7 +38,8 @@ export const MOCK_SOPS: SOP[] = [
     category: 'Geral',
     content: 'Na Automatik, valorizamos a autonomia com responsabilidade. Somos Remote-First, o que significa que você pode trabalhar de onde quiser, desde que tenha uma conexão estável e cumpra seus compromissos. A comunicação assíncrona é prioridade.',
     lastUpdated: '2023-10-15',
-    tags: ['cultura', 'remoto', 'valores']
+    tags: ['cultura', 'remoto', 'valores'],
+    type: 'standard'
   },
   {
     id: '2',
@@ -46,7 +47,8 @@ export const MOCK_SOPS: SOP[] = [
     category: 'HR',
     content: 'Reembolsos devem ser solicitados até o dia 20 de cada mês através do sistema Expensify. Despesas acima de R$ 500,00 precisam de aprovação prévia do gestor direto. O reembolso cai na conta salário junto com o pagamento mensal.',
     lastUpdated: '2024-01-10',
-    tags: ['financeiro', 'reembolso', 'benefícios']
+    tags: ['financeiro', 'reembolso', 'benefícios'],
+    type: 'standard'
   },
   {
     id: '3',
@@ -54,7 +56,8 @@ export const MOCK_SOPS: SOP[] = [
     category: 'Tech',
     content: 'Todos os engenheiros devem utilizar MacBooks fornecidos pela empresa. O setup inicial inclui: VS Code, Docker, Node.js LTS e acesso aos repositórios da organização. O VPN é obrigatório para acesso aos bancos de dados de produção.',
     lastUpdated: '2024-02-01',
-    tags: ['dev', 'setup', 'engenharia']
+    tags: ['dev', 'setup', 'engenharia'],
+    type: 'standard'
   },
   {
     id: '4',
@@ -62,7 +65,8 @@ export const MOCK_SOPS: SOP[] = [
     category: 'Vendas',
     content: 'O processo de vendas segue o fluxo: Prospecção (LinkedIn Sales Nav) -> Conexão (Email/Cold Call) -> Discovery -> Demo -> Proposta. Utilize o CRM HubSpot para registrar todas as interações.',
     lastUpdated: '2023-11-20',
-    tags: ['vendas', 'crm', 'processo']
+    tags: ['vendas', 'crm', 'processo'],
+    type: 'standard'
   },
   {
     id: '5',
@@ -70,7 +74,8 @@ export const MOCK_SOPS: SOP[] = [
     category: 'HR',
     content: 'As férias devem ser solicitadas com no mínimo 30 dias de antecedência via plataforma de RH. O período mínimo é de 10 dias. Converse com seu time antes para alinhar a cobertura durante sua ausência.',
     lastUpdated: '2024-03-05',
-    tags: ['rh', 'férias', 'descanso']
+    tags: ['rh', 'férias', 'descanso'],
+    type: 'standard'
   }
 ];
 

@@ -1,10 +1,10 @@
+
 import { getSupabase } from './supabaseClient';
 import { SOP } from '../types';
 import { MOCK_SOPS } from '../constants';
 
 const mapSopFromDb = (row: any): SOP => {
   // Helper to find a property case-insensitively or check common variants
-  // This handles scenarios where the DB column might be last_updated, lastUpdated, or lastupdated
   const lastUpdated = row.lastUpdated || row.last_updated || row.lastupdated || new Date().toISOString();
   const deletedAt = row.deleted_at || row.deletedAt || row.deleted_date || null;
   
@@ -17,7 +17,9 @@ const mapSopFromDb = (row: any): SOP => {
     lastUpdated: lastUpdated,
     deleted_at: deletedAt,
     responsible_department: row.responsible_department || undefined,
-    responsible_users: Array.isArray(row.responsible_users) ? row.responsible_users : []
+    responsible_users: Array.isArray(row.responsible_users) ? row.responsible_users : [],
+    type: row.type || 'standard',
+    process_details: row.process_details || undefined
   };
 };
 
@@ -30,8 +32,6 @@ export const SopService = {
         return MOCK_SOPS;
     }
 
-    // We fetch ALL records without filtering by deleted_at in the query
-    // This prevents the "column deleted_at does not exist" crash if the schema is incomplete
     const { data, error } = await supabase
       .from('sops')
       .select('*');
@@ -41,10 +41,9 @@ export const SopService = {
       return MOCK_SOPS;
     }
     
-    // We perform filtering and sorting in memory to be robust against schema variations
     return (data || [])
       .map(mapSopFromDb)
-      .filter(sop => !sop.deleted_at) // Hide soft deleted items
+      .filter(sop => !sop.deleted_at)
       .sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
   },
 
@@ -63,7 +62,7 @@ export const SopService = {
 
     return (data || [])
       .map(mapSopFromDb)
-      .filter(sop => !!sop.deleted_at) // Only keep those WITH a deletion date
+      .filter(sop => !!sop.deleted_at)
       .sort((a, b) => {
         const dateA = a.deleted_at ? new Date(a.deleted_at).getTime() : 0;
         const dateB = b.deleted_at ? new Date(b.deleted_at).getTime() : 0;
@@ -75,7 +74,6 @@ export const SopService = {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase não conectado");
 
-    // Using 'lastUpdated' (CamelCase) as primary attempt since 'last_updated' was reported missing
     const dbPayload = {
       title: sop.title,
       category: sop.category,
@@ -83,8 +81,9 @@ export const SopService = {
       tags: sop.tags,
       lastUpdated: sop.lastUpdated,
       responsible_department: sop.responsible_department,
-      responsible_users: sop.responsible_users
-      // We do not send deleted_at on create
+      responsible_users: sop.responsible_users,
+      type: sop.type,
+      process_details: sop.process_details
     };
 
     const { data, error } = await supabase
@@ -111,7 +110,9 @@ export const SopService = {
       tags: sop.tags,
       lastUpdated: new Date().toISOString(),
       responsible_department: sop.responsible_department,
-      responsible_users: sop.responsible_users
+      responsible_users: sop.responsible_users,
+      type: sop.type,
+      process_details: sop.process_details
     };
 
     const { data, error } = await supabase
@@ -134,30 +135,26 @@ export const SopService = {
 
     const timestamp = new Date().toISOString();
 
-    // --- TENTATIVA 1: Soft Delete (deleted_at - Padrão SQL) ---
     const { error: errorSnake } = await supabase
       .from('sops')
       .update({ deleted_at: timestamp })
       .eq('id', id);
     
-    if (!errorSnake) return; // Sucesso no soft delete
+    if (!errorSnake) return;
 
-    // Verificamos se o erro é sobre coluna inexistente
     const isColumnMissing = errorSnake.message?.includes('does not exist') || 
                             errorSnake.message?.includes('Could not find') ||
                             errorSnake.code === '42703' || 
                             errorSnake.code === 'PGRST204';
 
     if (isColumnMissing) {
-         // --- TENTATIVA 2: Soft Delete (deletedAt - Padrão JSON/Antigo) ---
          const { error: errorCamel } = await supabase
             .from('sops')
             .update({ deletedAt: timestamp })
             .eq('id', id);
          
-         if (!errorCamel) return; // Sucesso no soft delete CamelCase
+         if (!errorCamel) return;
 
-         // --- FALLBACK: HARD DELETE ---
          console.warn("Colunas de Lixeira (deleted_at) não encontradas. Executando exclusão permanente.");
          
          const { error: errorHard } = await supabase
@@ -180,13 +177,11 @@ export const SopService = {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase não conectado");
 
-    // Tenta limpar deleted_at
     let { error } = await supabase
       .from('sops')
       .update({ deleted_at: null })
       .eq('id', id);
 
-    // Se falhar, tenta limpar deletedAt
     if (error && (error.message?.includes('does not exist') || error.code === '42703')) {
         const { error: errorCamel } = await supabase
         .from('sops')

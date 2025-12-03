@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, User } from '../types';
 import { UserService } from '../services/userService';
-import { Home, CheckSquare, Book, Wrench, Bot, LogOut, Shield, UserCog, Video, X, Camera, Save, Lock } from 'lucide-react';
+import { Home, CheckSquare, Book, Wrench, Bot, LogOut, Shield, UserCog, Video, X, Camera, Save, Lock, Upload } from 'lucide-react';
 import { LOGO_URL, COMPANY_NAME } from '../constants';
 
 interface SidebarProps {
@@ -17,6 +17,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar || '');
   const [password, setPassword] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const menuItems = [
     { id: View.DASHBOARD, label: 'INÍCIO', icon: <Home size={18} /> },
@@ -45,6 +46,28 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
         alert("Erro ao atualizar perfil.");
     }
   }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Limite simples de tamanho (ex: 2MB) para não pesar o banco
+    if (file.size > 2 * 1024 * 1024) {
+      alert("A imagem deve ter no máximo 2MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setAvatarUrl(base64String);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCameraClick = () => {
+    fileInputRef.current?.click();
+  };
 
   return (
     <>
@@ -143,16 +166,27 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
             <div className="p-6 space-y-6">
               
               <div className="flex justify-center">
-                 <div className="relative">
-                    <img src={avatarUrl || user?.avatar} className="w-24 h-24 rounded-full border-2 border-white/10 shadow-lg" alt="Profile" />
-                    <div className="absolute bottom-0 right-0 bg-cyan-600 p-1.5 rounded-full text-white border-2 border-[#0B1120]">
+                 <div className="relative group cursor-pointer" onClick={handleCameraClick}>
+                    <img src={avatarUrl || user?.avatar} className="w-24 h-24 rounded-full border-2 border-white/10 shadow-lg object-cover" alt="Profile" />
+                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Upload className="text-white" size={24} />
+                    </div>
+                    <div className="absolute bottom-0 right-0 bg-cyan-600 p-1.5 rounded-full text-white border-2 border-[#0B1120] z-10">
                         <Camera size={14} />
                     </div>
+                    {/* Hidden File Input */}
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
                  </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">URL da Foto (Avatar)</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">URL da Foto (Ou use a câmera acima)</label>
                 <input 
                   type="text" 
                   value={avatarUrl}
