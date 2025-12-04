@@ -577,7 +577,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
                                 <button onClick={() => setIsCustomCategory(false)} className="px-3 bg-slate-800 rounded-lg text-slate-400 hover:text-white"><X size={16}/></button>
                             </div>
                         ) : (
-                            <select value={formData.category || 'Geral'} onChange={e => e.target.value === 'new_custom' ? (setIsCustomCategory(true), setFormData({...formData, category: ''})) : setFormData({...formData, category: e.target.value as any})} className="w-full bg-[#020617] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/50 appearance-none">
+                            <select value={formData.category || 'Geral'} onChange={e => e.target.value === 'new_custom' ? (setIsCustomCategory(true), setFormData({...formData, category: '' as any})) : setFormData({...formData, category: e.target.value as any})} className="w-full bg-[#020617] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/50 appearance-none">
                                 {categories.filter(c => c !== 'Todos').map(c => <option key={c} value={c}>{c}</option>)}
                                 <option value="new_custom">+ Outro...</option>
                             </select>
@@ -591,7 +591,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
                                 <button onClick={() => setIsCustomDepartment(false)} className="px-3 bg-slate-800 rounded-lg text-slate-400 hover:text-white"><X size={16}/></button>
                             </div>
                         ) : (
-                            <select value={formData.responsible_department || 'Geral'} onChange={e => e.target.value === 'new_custom' ? (setIsCustomDepartment(true), setFormData({...formData, responsible_department: ''})) : setFormData({...formData, responsible_department: e.target.value as any})} className="w-full bg-[#020617] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/50 appearance-none">
+                            <select value={formData.responsible_department || 'Geral'} onChange={e => e.target.value === 'new_custom' ? (setIsCustomDepartment(true), setFormData({...formData, responsible_department: '' as any})) : setFormData({...formData, responsible_department: e.target.value as any})} className="w-full bg-[#020617] border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-cyan-500/50 appearance-none">
                                 {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
                                 <option value="new_custom">+ Outro...</option>
                             </select>
