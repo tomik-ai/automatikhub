@@ -54,18 +54,22 @@ export const TrainingService = {
       instructor: training.instructor
     };
 
+    // Usamos select() simples em vez de single() para evitar crash se a policy falhar silenciosamente
     const { data, error } = await supabase
       .from('trainings')
       .insert([dbPayload])
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error('Erro ao criar treinamento:', JSON.stringify(error, null, 2));
       throw error;
     }
+
+    if (!data || data.length === 0) {
+       throw new Error("Erro desconhecido ao criar: nenhum dado retornado.");
+    }
     
-    return mapTrainingFromDb(data);
+    return mapTrainingFromDb(data[0]);
   },
 
   update: async (training: Training): Promise<Training> => {
@@ -82,19 +86,24 @@ export const TrainingService = {
       instructor: training.instructor
     };
 
+    // CORREÇÃO PGRST116: Removido .single()
     const { data, error } = await supabase
       .from('trainings')
       .update(dbPayload)
       .eq('id', training.id)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error('Erro ao atualizar treinamento:', JSON.stringify(error, null, 2));
       throw error;
     }
     
-    return mapTrainingFromDb(data);
+    // Verificação manual se houve retorno
+    if (!data || data.length === 0) {
+      throw new Error("Treinamento não encontrado ou permissão negada pelo Banco de Dados. Verifique as Policies (RLS) no Supabase.");
+    }
+    
+    return mapTrainingFromDb(data[0]);
   },
 
   delete: async (id: string): Promise<void> => {

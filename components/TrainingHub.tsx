@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Training } from '../types';
 import { TrainingService } from '../services/trainingService';
 import { StorageService } from '../services/storage';
-import { Play, Clock, Search, Video, Plus, X, Trash2, Loader2, Edit2, ExternalLink, RefreshCw } from 'lucide-react';
+import { Play, Clock, Search, Video, Plus, X, Trash2, Loader2, Edit2, ExternalLink, RefreshCw, Image as ImageIcon } from 'lucide-react';
 
 const TrainingHub: React.FC = () => {
   const [trainings, setTrainings] = useState<Training[]>([]);
@@ -14,6 +14,7 @@ const TrainingHub: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<Training>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   const user = StorageService.getSession();
   const isAdminOrMod = user?.role === 'admin' || user?.role === 'moderator';
@@ -47,12 +48,8 @@ const TrainingHub: React.FC = () => {
     if (id) {
         return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
     }
-    return `https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80`;
-  };
-
-  const isYouTubeThumbnail = (url?: string) => {
-    if (!url) return false;
-    return url.includes('youtube.com') || url.includes('ytimg.com');
+    // Retorna vazio se não for youtube, para o UI tratar
+    return '';
   };
 
   const categories = ['Todos', ...Array.from(new Set(trainings.map(t => t.category)))];
@@ -82,18 +79,23 @@ const TrainingHub: React.FC = () => {
         alert("Preencha título e URL do vídeo");
         return;
     }
+    
+    setIsSaving(true);
 
-    // Logic: auto-generate thumbnail if empty or if it looks like an old auto-generated one
+    // Lógica de Capa:
+    // 1. Se o usuário inseriu URL manual, usa ela.
+    // 2. Se não inseriu, tenta gerar do YouTube.
+    // 3. Se não for YouTube e não tiver capa, usa fallback.
     let finalThumbnail = formData.thumbnailUrl;
-    const shouldUpdateThumbnail = !finalThumbnail || finalThumbnail.trim() === '' || isYouTubeThumbnail(finalThumbnail);
+    
+    // Se estiver vazio ou for uma URL antiga do YouTube, tentamos regenerar para garantir que bata com o vídeo novo
+    const isYt = getYouTubeId(formData.videoUrl);
+    if (isYt && (!finalThumbnail || finalThumbnail.includes('youtube.com') || finalThumbnail.includes('ytimg.com'))) {
+         finalThumbnail = getYouTubeThumbnail(formData.videoUrl);
+    }
 
-    if (shouldUpdateThumbnail) {
-        const ytThumb = getYouTubeId(formData.videoUrl);
-        if (ytThumb) {
-             finalThumbnail = getYouTubeThumbnail(formData.videoUrl);
-        } else if (!finalThumbnail) {
-             finalThumbnail = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=800&q=80';
-        }
+    if (!finalThumbnail) {
+         finalThumbnail = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=800&q=80';
     }
 
     try {
@@ -103,7 +105,7 @@ const TrainingHub: React.FC = () => {
                 title: formData.title!,
                 description: formData.description || '',
                 videoUrl: formData.videoUrl!,
-                thumbnailUrl: finalThumbnail || '',
+                thumbnailUrl: finalThumbnail,
                 category: formData.category || 'Geral',
                 duration: formData.duration || 'N/A',
                 instructor: formData.instructor || user?.name || 'Automatik Team'
@@ -113,7 +115,7 @@ const TrainingHub: React.FC = () => {
                 title: formData.title!,
                 description: formData.description || '',
                 videoUrl: formData.videoUrl!,
-                thumbnailUrl: finalThumbnail || '',
+                thumbnailUrl: finalThumbnail,
                 category: formData.category || 'Geral',
                 duration: formData.duration || 'N/A',
                 instructor: user?.name || 'Automatik Team'
@@ -126,6 +128,8 @@ const TrainingHub: React.FC = () => {
     } catch (e: any) {
         console.error(e);
         alert("Erro ao salvar: " + (e.message || JSON.stringify(e)));
+    } finally {
+        setIsSaving(false);
     }
   };
 
@@ -138,6 +142,16 @@ const TrainingHub: React.FC = () => {
     } catch (e: any) {
         alert("Erro ao excluir: " + e.message);
     }
+  };
+
+  const handleUrlBlur = () => {
+      // Auto-preenche a thumbnail quando sai do campo de Video URL se a thumbnail estiver vazia
+      if (formData.videoUrl && !formData.thumbnailUrl) {
+          const thumb = getYouTubeThumbnail(formData.videoUrl);
+          if (thumb) {
+              setFormData(prev => ({ ...prev, thumbnailUrl: thumb }));
+          }
+      }
   };
 
   return (
@@ -223,7 +237,7 @@ const TrainingHub: React.FC = () => {
                 {/* Thumbnail Wrapper */}
                 <div className="relative aspect-video bg-slate-800 overflow-hidden">
                 <img 
-                    src={training.thumbnailUrl || getYouTubeThumbnail(training.videoUrl)} 
+                    src={training.thumbnailUrl || getYouTubeThumbnail(training.videoUrl) || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=800&q=80'} 
                     alt={training.title} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100" 
                     onError={(e) => {
@@ -290,6 +304,7 @@ const TrainingHub: React.FC = () => {
                   value={formData.title || ''}
                   onChange={e => setFormData({...formData, title: e.target.value})}
                   className="w-full bg-slate-950 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  placeholder="Ex: Treinamento de Vendas"
                 />
               </div>
               <div>
@@ -298,6 +313,7 @@ const TrainingHub: React.FC = () => {
                   value={formData.description || ''}
                   onChange={e => setFormData({...formData, description: e.target.value})}
                   className="w-full bg-slate-950 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-violet-500 h-24"
+                  placeholder="Sobre o que é este vídeo?"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -307,6 +323,7 @@ const TrainingHub: React.FC = () => {
                         type="text" 
                         value={formData.videoUrl || ''}
                         onChange={e => setFormData({...formData, videoUrl: e.target.value})}
+                        onBlur={handleUrlBlur}
                         className="w-full bg-slate-950 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
                         placeholder="https://youtube.com/..."
                     />
@@ -334,34 +351,51 @@ const TrainingHub: React.FC = () => {
                     />
                  </div>
                  <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex justify-between">
-                        Thumbnail (Opcional)
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex justify-between items-center">
+                        Thumbnail
                          <button 
                             type="button"
                             onClick={() => {
                                 if (formData.videoUrl) {
-                                    setFormData({...formData, thumbnailUrl: getYouTubeThumbnail(formData.videoUrl)});
+                                    const thumb = getYouTubeThumbnail(formData.videoUrl);
+                                    if(thumb) setFormData({...formData, thumbnailUrl: thumb});
+                                    else alert("Não foi possível gerar a capa automaticamente para este link.");
                                 }
                             }}
-                            className="text-[10px] text-violet-400 hover:text-white flex items-center gap-1"
+                            className="text-[10px] text-violet-400 hover:text-white flex items-center gap-1 bg-violet-900/20 px-2 py-0.5 rounded border border-violet-500/20"
                          >
-                            <RefreshCw size={10} /> Auto-Gerar
+                            <RefreshCw size={10} /> Auto-Youtube
                          </button>
                     </label>
-                    <input 
-                        type="text" 
-                        value={formData.thumbnailUrl || ''}
-                        onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})}
-                        className="w-full bg-slate-950 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-                        placeholder="Deixe vazio para usar a do YouTube"
-                    />
+                    <div className="relative">
+                        <ImageIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <input 
+                            type="text" 
+                            value={formData.thumbnailUrl || ''}
+                            onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})}
+                            className="w-full bg-slate-950 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-violet-500 text-xs truncate"
+                            placeholder="URL da Imagem (Opcional)"
+                        />
+                    </div>
                  </div>
               </div>
 
+              {/* Preview Thumbnail */}
+              {formData.thumbnailUrl && (
+                  <div className="w-full h-32 bg-slate-900 rounded-lg overflow-hidden border border-white/5 relative group">
+                      <img src={formData.thumbnailUrl} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt="Preview" />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <span className="bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur-sm">Preview da Capa</span>
+                      </div>
+                  </div>
+              )}
+
               <button 
                 onClick={handleSave} 
-                className="w-full bg-violet-600 hover:bg-violet-500 py-3 rounded-lg text-white font-bold mt-4 transition-colors shadow-lg"
+                disabled={isSaving}
+                className="w-full bg-violet-600 hover:bg-violet-500 py-3 rounded-lg text-white font-bold mt-4 transition-colors shadow-lg flex items-center justify-center gap-2"
               >
+                {isSaving && <Loader2 size={16} className="animate-spin" />}
                 {isEditing ? 'Salvar Alterações' : 'Adicionar Vídeo'}
               </button>
             </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { SOP, User, ProcessDetails } from '../types';
 import { UserService } from '../services/userService';
@@ -326,23 +325,24 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
             </div>
             
             {/* Type Filter */}
-            <div className="flex items-center gap-2 bg-[#0B1120] border border-white/10 p-1 rounded-lg">
+            <div className="flex items-center gap-1 bg-[#0B1120] border border-white/10 p-1.5 rounded-lg shrink-0 overflow-x-auto">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mx-2 flex items-center gap-1"><Filter size={10} /> Tipo:</span>
                 <button 
                     onClick={() => setSelectedType('Todos')} 
-                    className={`px-3 py-2 rounded text-xs font-bold uppercase transition-all ${selectedType === 'Todos' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-white'}`}
+                    className={`px-3 py-2 rounded text-xs font-bold uppercase transition-all whitespace-nowrap ${selectedType === 'Todos' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-white'}`}
                 >
                     Todos
                 </button>
-                <div className="w-px h-4 bg-white/10"></div>
+                <div className="w-px h-4 bg-white/10 mx-1"></div>
                 <button 
                     onClick={() => setSelectedType('standard')} 
-                    className={`px-3 py-2 rounded text-xs font-bold uppercase transition-all flex items-center gap-2 ${selectedType === 'standard' ? 'bg-cyan-900/30 text-cyan-400' : 'text-slate-500 hover:text-cyan-400'}`}
+                    className={`px-3 py-2 rounded text-xs font-bold uppercase transition-all flex items-center gap-2 whitespace-nowrap ${selectedType === 'standard' ? 'bg-cyan-900/30 text-cyan-400 border border-cyan-500/20' : 'text-slate-500 hover:text-cyan-400'}`}
                 >
                     <FileText size={14}/> Documentos
                 </button>
                 <button 
                     onClick={() => setSelectedType('process')} 
-                    className={`px-3 py-2 rounded text-xs font-bold uppercase transition-all flex items-center gap-2 ${selectedType === 'process' ? 'bg-violet-900/30 text-violet-400' : 'text-slate-500 hover:text-violet-400'}`}
+                    className={`px-3 py-2 rounded text-xs font-bold uppercase transition-all flex items-center gap-2 whitespace-nowrap ${selectedType === 'process' ? 'bg-violet-900/30 text-violet-400 border border-violet-500/20' : 'text-slate-500 hover:text-violet-400'}`}
                 >
                     <ListTree size={14}/> Processos
                 </button>
@@ -356,10 +356,10 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               className={`
-                px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all
+                px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all focus:outline-none
                 ${selectedCategory === cat 
-                  ? 'bg-white/10 text-cyan-400 border border-cyan-500/30' 
-                  : 'bg-[#0B1120] border border-white/5 text-slate-500 hover:text-white'}
+                  ? 'bg-white/10 text-cyan-400 border border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.1)]' 
+                  : 'bg-[#0B1120] border border-white/5 text-slate-500 hover:text-white hover:border-white/10'}
               `}
             >
               {cat}
@@ -398,7 +398,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
                 </div>
                 {canEditSop(sop) && (
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={(e) => handleOpenEdit(sop, e)} className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-400 hover:text-indigo-400">
+                    <button onClick={(e) => handleOpenEdit(sop, e)} className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-400 hover:text-indigo-400 transition-colors">
                       <Edit2 size={14} />
                     </button>
                     {renderDeleteButton(sop.id, 14)}
@@ -433,7 +433,11 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
         
         {filteredSOPs.length === 0 && (
           <div className="col-span-full py-20 text-center">
-            <h3 className="text-slate-200 font-bold text-lg">Nenhum documento localizado.</h3>
+             <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700">
+               <Filter size={24} className="text-slate-500" />
+            </div>
+            <h3 className="text-slate-300 font-bold text-lg mb-1">Nenhum documento encontrado.</h3>
+            <p className="text-slate-500 text-sm">Tente mudar o filtro de Tipo ou Categoria.</p>
           </div>
         )}
       </div>
