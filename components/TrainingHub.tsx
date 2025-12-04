@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Training } from '../types';
 import { TrainingService } from '../services/trainingService';
 import { StorageService } from '../services/storage';
-import { Play, Clock, Search, Video, Plus, X, Trash2, Loader2, Edit2, ExternalLink, RefreshCw, Image as ImageIcon } from 'lucide-react';
+import { Play, Clock, Search, Video, Plus, X, Trash2, Loader2, Edit2, ExternalLink, RefreshCw, Image as ImageIcon, Maximize2 } from 'lucide-react';
 
 const TrainingHub: React.FC = () => {
   const [trainings, setTrainings] = useState<Training[]>([]);
@@ -15,6 +15,9 @@ const TrainingHub: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<Training>>({});
   const [isSaving, setIsSaving] = useState(false);
+
+  // Player State
+  const [playingVideo, setPlayingVideo] = useState<Training | null>(null);
 
   const user = StorageService.getSession();
   const isAdminOrMod = user?.role === 'admin' || user?.role === 'moderator';
@@ -52,6 +55,12 @@ const TrainingHub: React.FC = () => {
     return '';
   };
 
+  const getEmbedUrl = (url: string) => {
+    const id = getYouTubeId(url);
+    if (!id) return null;
+    return `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`;
+  };
+
   const categories = ['Todos', ...Array.from(new Set(trainings.map(t => t.category)))];
 
   const filteredTrainings = trainings.filter(t => {
@@ -72,6 +81,16 @@ const TrainingHub: React.FC = () => {
       setFormData({ ...training });
       setIsEditing(true);
       setIsModalOpen(true);
+  };
+
+  const handleCardClick = (training: Training) => {
+      const embedUrl = getEmbedUrl(training.videoUrl);
+      if (embedUrl) {
+          setPlayingVideo(training);
+      } else {
+          // Fallback para links que não são do youtube
+          window.open(training.videoUrl, '_blank');
+      }
   };
 
   const handleSave = async () => {
@@ -215,7 +234,7 @@ const TrainingHub: React.FC = () => {
             <div 
                 key={training.id}
                 className="bg-[#0B1120] border border-white/5 rounded-xl overflow-hidden hover:border-violet-500/30 transition-all group cursor-pointer focus:outline-none relative"
-                onClick={() => window.open(training.videoUrl, '_blank')}
+                onClick={() => handleCardClick(training)}
             >
                 {isAdminOrMod && (
                     <div className="absolute top-2 right-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -265,7 +284,7 @@ const TrainingHub: React.FC = () => {
                     <span className="text-[10px] font-bold text-violet-400 uppercase tracking-widest bg-violet-500/10 px-2 py-1 rounded border border-violet-500/20">
                     {training.category}
                     </span>
-                    <ExternalLink size={12} className="text-slate-600 group-hover:text-violet-400 transition-colors"/>
+                    {!getYouTubeId(training.videoUrl) && <ExternalLink size={12} className="text-slate-600 group-hover:text-violet-400 transition-colors"/>}
                 </div>
                 
                 <h3 className="text-lg font-bold text-white mb-2 group-hover:text-violet-300 transition-colors line-clamp-2">
@@ -285,6 +304,35 @@ const TrainingHub: React.FC = () => {
                 </div>
             </div>
             ))}
+        </div>
+      )}
+
+      {/* Video Player Modal */}
+      {playingVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setPlayingVideo(null)}>
+            <div className="w-full max-w-5xl bg-[#0B1120] rounded-2xl overflow-hidden border border-white/10 shadow-2xl relative flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="bg-[#0B1120] px-4 py-3 border-b border-white/10 flex justify-between items-center">
+                     <h3 className="text-white font-bold truncate pr-4">{playingVideo.title}</h3>
+                     <button onClick={() => setPlayingVideo(null)} className="text-slate-400 hover:text-white transition-colors">
+                        <X size={24} />
+                     </button>
+                </div>
+                <div className="aspect-video w-full bg-black relative">
+                     {getEmbedUrl(playingVideo.videoUrl) ? (
+                        <iframe 
+                            src={getEmbedUrl(playingVideo.videoUrl)!} 
+                            title={playingVideo.title}
+                            className="absolute inset-0 w-full h-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            allowFullScreen
+                        ></iframe>
+                     ) : (
+                         <div className="flex items-center justify-center h-full text-slate-500">
+                             <p>Este vídeo não pode ser reproduzido aqui.</p>
+                         </div>
+                     )}
+                </div>
+            </div>
         </div>
       )}
 
