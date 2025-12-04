@@ -66,6 +66,38 @@ export const TrainingService = {
     } as Training;
   },
 
+  update: async (training: Training): Promise<Training> => {
+    const supabase = getSupabase();
+    if (!supabase) throw new Error("Supabase não conectado");
+
+    const { data, error } = await supabase
+      .from('trainings')
+      .update({
+        title: training.title,
+        description: training.description,
+        videoUrl: training.videoUrl,
+        thumbnailUrl: training.thumbnailUrl,
+        category: training.category,
+        duration: training.duration,
+        instructor: training.instructor
+      })
+      .eq('id', training.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao atualizar treinamento:', JSON.stringify(error, null, 2));
+      throw error;
+    }
+    
+    const row = data;
+    return {
+      ...training,
+      thumbnailUrl: row.thumbnailUrl || row.thumbnail_url,
+      videoUrl: row.videoUrl || row.video_url
+    } as Training;
+  },
+
   delete: async (id: string): Promise<void> => {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase não conectado");

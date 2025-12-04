@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { SOP, User, ProcessDetails } from '../types';
 import { UserService } from '../services/userService';
 import { DEPARTMENTS } from '../constants';
-import { Search, Plus, FileText, Tag, X, Edit2, Trash2, Save, Loader2, Check, AlertTriangle, Building2, Users, Calendar, ArrowRight, Book, ClipboardList, ListTree, Target, Activity, Upload } from 'lucide-react';
+import { Search, Plus, FileText, Tag, X, Edit2, Trash2, Save, Loader2, Check, AlertTriangle, Building2, Users, Calendar, ArrowRight, Book, ClipboardList, ListTree, Target, Activity, Upload, Filter } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -18,6 +18,7 @@ interface KnowledgeBaseProps {
 const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onEditSOP, onDeleteSOP }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
+  const [selectedType, setSelectedType] = useState<'Todos' | 'standard' | 'process'>('Todos');
   const [selectedSOP, setSelectedSOP] = useState<SOP | null>(null);
   
   // States for Modals
@@ -45,26 +46,32 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
 
   const categories = ['Todos', 'HR', 'Tech', 'Vendas', 'Operacional', 'Geral'];
   
-  // Permissions: Admin AND Moderator can edit
-  const canEdit = user.role === 'admin' || user.role === 'moderator';
+  // Permissions
+  const isAdminOrMod = user.role === 'admin' || user.role === 'moderator';
+  // Membros podem criar processos, mas não documentos padrão. Admins/Mods podem criar ambos.
+  const canCreateSomething = true; // Todos podem criar pelo menos processos
 
   // Load users for selection in form
   useEffect(() => {
-    if (canEdit) {
-      UserService.getAll().then(setAvailableUsers).catch(console.error);
-    }
-  }, [canEdit]);
+     UserService.getAll().then(setAvailableUsers).catch(console.error);
+  }, []);
 
   const filteredSOPs = sops.filter(sop => {
     const matchesSearch = sop.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           sop.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           sop.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = selectedCategory === 'Todos' || sop.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const matchesType = selectedType === 'Todos' || sop.type === selectedType;
+    return matchesSearch && matchesCategory && matchesType;
   });
 
   const handleOpenCreateClick = () => {
-    setIsTypeSelectionOpen(true);
+    if (isAdminOrMod) {
+        setIsTypeSelectionOpen(true);
+    } else {
+        // Members go directly to Process creation
+        startCreate('process');
+    }
   };
 
   const startCreate = (type: 'standard' | 'process') => {
@@ -98,6 +105,23 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
       e.stopPropagation();
       e.preventDefault();
     }
+    
+    // Only admins/mods can edit standard docs or others' processes generally,
+    // but for now we follow the general "canEdit" rule for editing. 
+    // If strict ownership is needed, we would check user.email vs sop.created_by equivalent.
+    if (!isAdminOrMod) {
+        // Members typically shouldn't edit approved docs, but if they created a process?
+        // For simplicity based on prompt: "Documents only admin and moderators".
+        // It implies editing too. 
+        if (sop.type === 'standard') {
+             alert("Apenas administradores e moderadores podem editar Documentos Padrão.");
+             return;
+        }
+        // Allow members to edit processes? The prompt says "create a process". 
+        // We'll allow editing processes for everyone for now to be user friendly, or restrict to Admin/Mod if strict control needed.
+        // Assuming member can edit processes for collaborative work.
+    }
+
     setFormData({
       ...sop,
       responsible_users: sop.responsible_users || []
@@ -252,6 +276,13 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
     return emails.map(email => ({ name: email.split('@')[0], email, avatar: `https://ui-avatars.com/api/?name=${email}&background=random` }));
   };
 
+  const canEditSop = (sop: SOP) => {
+      if (isAdminOrMod) return true;
+      // Members can edit Processes but NOT Documents
+      if (sop.type === 'process') return true;
+      return false;
+  };
+
   const markdownComponents = {
     h1: ({node, ...props}: any) => <h1 className="text-2xl md:text-3xl font-bold text-white mt-8 mb-4 pb-2 border-b border-white/10" {...props} />,
     h2: ({node, ...props}: any) => <h2 className="text-xl font-bold text-cyan-400 mt-6 mb-3 uppercase tracking-wide" {...props} />,
@@ -277,29 +308,57 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
           </h1>
           <p className="text-slate-400 max-w-2xl font-light">Repositório oficial de inteligência, procedimentos operacionais e processos.</p>
         </div>
-        {canEdit && (
+        {canCreateSomething && (
           <button 
             onClick={handleOpenCreateClick}
             className="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-2.5 rounded-lg font-bold uppercase tracking-wider text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(8,145,178,0.3)] hover:shadow-[0_0_20px_rgba(8,145,178,0.5)]"
           >
-            <Plus size={16} /> Novo Documento
+            <Plus size={16} /> {isAdminOrMod ? 'Novo Documento' : 'Novo Processo'}
           </button>
         )}
       </div>
 
-      {/* Search and Filter */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-          <input
-            type="text"
-            placeholder="PESQUISAR PROTOCOLOS E PROCESSOS..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-[#0B1120] border border-white/10 text-white rounded-lg focus:outline-none focus:border-cyan-500/50 placeholder-slate-600 font-mono text-sm"
-          />
-        </div>
-        <div className="flex overflow-x-auto pb-2 md:pb-0 gap-2 no-scrollbar">
+      {/* Search and Filters */}
+      <div className="flex flex-col gap-4 mb-8">
+         <div className="flex flex-col md:flex-row gap-4">
+             {/* Search */}
+            <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                <input
+                    type="text"
+                    placeholder="PESQUISAR PROTOCOLOS E PROCESSOS..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 bg-[#0B1120] border border-white/10 text-white rounded-lg focus:outline-none focus:border-cyan-500/50 placeholder-slate-600 font-mono text-sm"
+                />
+            </div>
+            
+            {/* Type Filter */}
+            <div className="flex items-center gap-2 bg-[#0B1120] border border-white/10 p-1 rounded-lg">
+                <button 
+                    onClick={() => setSelectedType('Todos')} 
+                    className={`px-3 py-2 rounded text-xs font-bold uppercase transition-all ${selectedType === 'Todos' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-white'}`}
+                >
+                    Todos
+                </button>
+                <div className="w-px h-4 bg-white/10"></div>
+                <button 
+                    onClick={() => setSelectedType('standard')} 
+                    className={`px-3 py-2 rounded text-xs font-bold uppercase transition-all flex items-center gap-2 ${selectedType === 'standard' ? 'bg-cyan-900/30 text-cyan-400' : 'text-slate-500 hover:text-cyan-400'}`}
+                >
+                    <FileText size={14}/> Documentos
+                </button>
+                <button 
+                    onClick={() => setSelectedType('process')} 
+                    className={`px-3 py-2 rounded text-xs font-bold uppercase transition-all flex items-center gap-2 ${selectedType === 'process' ? 'bg-violet-900/30 text-violet-400' : 'text-slate-500 hover:text-violet-400'}`}
+                >
+                    <ListTree size={14}/> Processos
+                </button>
+            </div>
+         </div>
+
+        {/* Categories */}
+        <div className="flex overflow-x-auto pb-2 gap-2 no-scrollbar">
           {categories.map(cat => (
             <button
               key={cat}
@@ -345,7 +404,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
                         </span>
                     )}
                 </div>
-                {canEdit && (
+                {canEditSop(sop) && (
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                     <button onClick={(e) => handleOpenEdit(sop, e)} className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded text-slate-400 hover:text-indigo-400">
                       <Edit2 size={14} />
@@ -382,7 +441,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
         )}
       </div>
 
-      {/* Type Selection Modal */}
+      {/* Type Selection Modal (Only for Admin/Mod) */}
       {isTypeSelectionOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[#0B1120] rounded-2xl w-full max-w-lg border border-white/10 p-8 relative">
@@ -433,7 +492,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
                  </span>
               </div>
               <div className="flex items-center gap-3">
-                 {canEdit && (
+                 {canEditSop(selectedSOP) && (
                    <div className="flex items-center gap-2 mr-4 border-r border-white/10 pr-6">
                       <button onClick={(e) => handleOpenEdit(selectedSOP, e)} className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
                         <Edit2 size={14} /> Editar

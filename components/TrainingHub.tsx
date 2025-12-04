@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Training } from '../types';
 import { TrainingService } from '../services/trainingService';
 import { StorageService } from '../services/storage';
-import { Play, Clock, Search, Video, Plus, X, Trash2, Loader2 } from 'lucide-react';
+import { Play, Clock, Search, Video, Plus, X, Trash2, Loader2, Edit2, ExternalLink } from 'lucide-react';
 
 const TrainingHub: React.FC = () => {
   const [trainings, setTrainings] = useState<Training[]>([]);
@@ -12,6 +12,7 @@ const TrainingHub: React.FC = () => {
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<Training>>({});
 
   const user = StorageService.getSession();
@@ -33,6 +34,22 @@ const TrainingHub: React.FC = () => {
     }
   };
 
+  // Helper to extract YouTube ID and Thumbnail
+  const getYouTubeId = (url: string) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  const getYouTubeThumbnail = (url: string) => {
+    const id = getYouTubeId(url);
+    if (id) {
+        return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+    }
+    return 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=800&q=80';
+  };
+
   const categories = ['Todos', ...Array.from(new Set(trainings.map(t => t.category)))];
 
   const filteredTrainings = trainings.filter(t => {
@@ -42,26 +59,60 @@ const TrainingHub: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
+  const handleOpenAdd = () => {
+      setFormData({});
+      setIsEditing(false);
+      setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (training: Training, e: React.MouseEvent) => {
+      e.stopPropagation();
+      setFormData({ ...training });
+      setIsEditing(true);
+      setIsModalOpen(true);
+  };
+
   const handleSave = async () => {
     if (!formData.title || !formData.videoUrl) {
         alert("Preencha título e URL do vídeo");
         return;
     }
+
+    // Auto-generate thumbnail if empty or user wants default
+    let finalThumbnail = formData.thumbnailUrl;
+    if (!finalThumbnail || finalThumbnail.trim() === '') {
+        finalThumbnail = getYouTubeThumbnail(formData.videoUrl);
+    }
+
     try {
-        await TrainingService.create({
-            title: formData.title!,
-            description: formData.description || '',
-            videoUrl: formData.videoUrl!,
-            thumbnailUrl: formData.thumbnailUrl || '',
-            category: formData.category || 'Geral',
-            duration: formData.duration || 'N/A',
-            instructor: user?.name || 'Automatik Team'
-        });
+        if (isEditing && formData.id) {
+             await TrainingService.update({
+                id: formData.id,
+                title: formData.title!,
+                description: formData.description || '',
+                videoUrl: formData.videoUrl!,
+                thumbnailUrl: finalThumbnail,
+                category: formData.category || 'Geral',
+                duration: formData.duration || 'N/A',
+                instructor: formData.instructor || user?.name || 'Automatik Team'
+             });
+        } else {
+            await TrainingService.create({
+                title: formData.title!,
+                description: formData.description || '',
+                videoUrl: formData.videoUrl!,
+                thumbnailUrl: finalThumbnail,
+                category: formData.category || 'Geral',
+                duration: formData.duration || 'N/A',
+                instructor: user?.name || 'Automatik Team'
+            });
+        }
+        
         setIsModalOpen(false);
         setFormData({});
         loadTrainings();
     } catch (e: any) {
-        alert("Erro ao criar: " + e.message);
+        alert("Erro ao salvar: " + e.message);
     }
   };
 
@@ -88,7 +139,7 @@ const TrainingHub: React.FC = () => {
         </div>
         {isAdminOrMod && (
             <button 
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleOpenAdd}
                 className="bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-lg font-bold uppercase tracking-wider text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(139,92,246,0.3)] hover:shadow-[0_0_20px_rgba(139,92,246,0.5)]"
             >
                 <Plus size={16} /> Novo Video
@@ -140,18 +191,26 @@ const TrainingHub: React.FC = () => {
                 onClick={() => window.open(training.videoUrl, '_blank')}
             >
                 {isAdminOrMod && (
-                    <button 
-                        onClick={(e) => handleDelete(training.id, e)}
-                        className="absolute top-2 right-2 z-20 p-2 bg-black/50 hover:bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                        <Trash2 size={16} />
-                    </button>
+                    <div className="absolute top-2 right-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <button 
+                            onClick={(e) => handleOpenEdit(training, e)}
+                            className="p-2 bg-black/60 hover:bg-violet-600 text-white rounded backdrop-blur-sm transition-colors"
+                        >
+                            <Edit2 size={14} />
+                        </button>
+                        <button 
+                            onClick={(e) => handleDelete(training.id, e)}
+                            className="p-2 bg-black/60 hover:bg-red-600 text-white rounded backdrop-blur-sm transition-colors"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                    </div>
                 )}
 
                 {/* Thumbnail Wrapper */}
                 <div className="relative aspect-video bg-slate-800 overflow-hidden">
                 <img 
-                    src={training.thumbnailUrl || `https://img.youtube.com/vi/${training.videoUrl.split('/').pop()}/maxresdefault.jpg`} 
+                    src={training.thumbnailUrl || getYouTubeThumbnail(training.videoUrl)} 
                     alt={training.title} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100" 
                     onError={(e) => {
@@ -173,6 +232,7 @@ const TrainingHub: React.FC = () => {
                     <span className="text-[10px] font-bold text-violet-400 uppercase tracking-widest bg-violet-500/10 px-2 py-1 rounded border border-violet-500/20">
                     {training.category}
                     </span>
+                    <ExternalLink size={12} className="text-slate-600 group-hover:text-violet-400 transition-colors"/>
                 </div>
                 
                 <h3 className="text-lg font-bold text-white mb-2 group-hover:text-violet-300 transition-colors line-clamp-2">
@@ -195,12 +255,12 @@ const TrainingHub: React.FC = () => {
         </div>
       )}
 
-      {/* Create Modal */}
+      {/* Create/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}>
           <div className="bg-[#0B1120] rounded-xl w-full max-w-lg shadow-2xl border border-white/10" onClick={e => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white">Adicionar Treinamento</h3>
+              <h3 className="text-lg font-bold text-white">{isEditing ? 'Editar Treinamento' : 'Adicionar Treinamento'}</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white"><X size={20} /></button>
             </div>
             <div className="p-6 space-y-4">
@@ -223,13 +283,13 @@ const TrainingHub: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">URL Vídeo</label>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">URL Vídeo (YouTube)</label>
                     <input 
                         type="text" 
                         value={formData.videoUrl || ''}
                         onChange={e => setFormData({...formData, videoUrl: e.target.value})}
                         className="w-full bg-slate-950 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-                        placeholder="https://..."
+                        placeholder="https://youtube.com/..."
                     />
                 </div>
                 <div>
@@ -255,12 +315,13 @@ const TrainingHub: React.FC = () => {
                     />
                  </div>
                  <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Thumbnail URL (Opcional)</label>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Thumbnail (Opcional)</label>
                     <input 
                         type="text" 
                         value={formData.thumbnailUrl || ''}
                         onChange={e => setFormData({...formData, thumbnailUrl: e.target.value})}
                         className="w-full bg-slate-950 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                        placeholder="Deixe vazio para usar a do YouTube"
                     />
                  </div>
               </div>
@@ -269,7 +330,7 @@ const TrainingHub: React.FC = () => {
                 onClick={handleSave} 
                 className="w-full bg-violet-600 hover:bg-violet-500 py-3 rounded-lg text-white font-bold mt-4 transition-colors shadow-lg"
               >
-                Salvar Vídeo
+                {isEditing ? 'Salvar Alterações' : 'Adicionar Vídeo'}
               </button>
             </div>
           </div>
