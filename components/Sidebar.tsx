@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, User } from '../types';
 import { UserService } from '../services/userService';
-import { Home, CheckSquare, Book, Wrench, Bot, LogOut, Shield, UserCog, Video, X, Camera, Save, Lock, Upload } from 'lucide-react';
+import { Home, CheckSquare, Book, Wrench, Bot, LogOut, Shield, UserCog, Video, X, Camera, Save, Lock, Upload, Rocket, Activity } from 'lucide-react';
 import { LOGO_URL, COMPANY_NAME } from '../constants';
 
 interface SidebarProps {
@@ -22,14 +22,17 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
   const menuItems = [
     { id: View.DASHBOARD, label: 'INÍCIO', icon: <Home size={18} /> },
     { id: View.ONBOARDING, label: 'ONBOARDING', icon: <CheckSquare size={18} /> },
+    { id: View.JOURNEY, label: 'JORNADA', icon: <Rocket size={18} /> },
     { id: View.TRAINING, label: 'TREINAMENTOS', icon: <Video size={18} /> },
     { id: View.KNOWLEDGE_BASE, label: 'DOCUMENTOS', icon: <Book size={18} /> },
     { id: View.TOOLS, label: 'FERRAMENTAS', icon: <Wrench size={18} /> },
     { id: View.AI_ASSISTANT, label: 'AUTOMATIK AI', icon: <Bot size={18} /> },
   ];
 
-  // Add Admin item only if user is strict admin
+  // Add Admin items
   if (user?.role === 'admin') {
+    // Insert Overview right after Dashboard for admins
+    menuItems.splice(1, 0, { id: View.OVERVIEW, label: 'VISÃO GERAL', icon: <Activity size={18} /> });
     menuItems.push({ id: View.ADMIN, label: 'ADMINISTRAÇÃO', icon: <Shield size={18} /> });
   }
 
@@ -51,7 +54,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Limite simples de tamanho (ex: 2MB) para não pesar o banco
     if (file.size > 2 * 1024 * 1024) {
       alert("A imagem deve ter no máximo 2MB.");
       return;
@@ -99,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
                 key={item.id}
                 onClick={() => {
                   onChangeView(item.id);
-                  setIsOpen(false); // Close on mobile when clicked
+                  setIsOpen(false);
                 }}
                 className={`
                   w-full flex items-center gap-3 px-4 py-3 rounded-md text-xs font-bold tracking-widest transition-all duration-300 relative overflow-hidden group focus:outline-none focus:ring-0
@@ -174,7 +176,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
                     <div className="absolute bottom-0 right-0 bg-cyan-600 p-1.5 rounded-full text-white border-2 border-[#0B1120] z-10">
                         <Camera size={14} />
                     </div>
-                    {/* Hidden File Input */}
                     <input 
                       type="file" 
                       ref={fileInputRef} 

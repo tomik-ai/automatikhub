@@ -2,11 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Onboarding from './components/Onboarding';
+import EmployeeJourney from './components/EmployeeJourney';
 import KnowledgeBase from './components/KnowledgeBase';
 import ToolsDirectory from './components/ToolsDirectory';
 import AiAssistant from './components/AiAssistant';
 import AdminPanel from './components/AdminPanel';
 import TrainingHub from './components/TrainingHub';
+import Overview from './components/Overview'; // New Import
 import Login from './components/Login';
 import { View, OnboardingStep, User, SOP, Tool } from './types';
 import { StorageService } from './services/storage';
@@ -222,6 +224,10 @@ const App: React.FC = () => {
           onToggleStep={handleToggleStep} 
           onChangeView={setCurrentView}
         />;
+      case View.JOURNEY:
+        return <EmployeeJourney />;
+      case View.OVERVIEW: // Route for Overview
+        return <Overview sops={sops} tools={tools} />;
       case View.KNOWLEDGE_BASE:
         if (isLoadingSops && sops.length === 0) {
           return (
@@ -293,7 +299,7 @@ const App: React.FC = () => {
 
         {/* Main Content Scrollable Area */}
         <div className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth custom-scrollbar">
-          <div className="max-w-[1600px] mx-auto w-full">
+          <div className="max-w-[1600px] mx-auto w-full h-full">
             {renderContent()}
           </div>
         </div>

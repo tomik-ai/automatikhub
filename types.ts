@@ -56,7 +56,9 @@ export interface Training {
 
 export enum View {
   DASHBOARD = 'dashboard',
+  OVERVIEW = 'overview', // Novo Item
   ONBOARDING = 'onboarding',
+  JOURNEY = 'journey',
   KNOWLEDGE_BASE = 'knowledge_base',
   TOOLS = 'tools',
   TRAINING = 'training',
