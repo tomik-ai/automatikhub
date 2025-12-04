@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Training } from '../types';
 import { TrainingService } from '../services/trainingService';
 import { StorageService } from '../services/storage';
-import { Play, Clock, Search, Video, Plus, X, Trash2, Loader2, Edit2, ExternalLink } from 'lucide-react';
+import { Play, Clock, Search, Video, Plus, X, Trash2, Loader2, Edit2, ExternalLink, RefreshCw } from 'lucide-react';
 
 const TrainingHub: React.FC = () => {
   const [trainings, setTrainings] = useState<Training[]>([]);
@@ -45,9 +45,14 @@ const TrainingHub: React.FC = () => {
   const getYouTubeThumbnail = (url: string) => {
     const id = getYouTubeId(url);
     if (id) {
-        return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+        return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
     }
-    return 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=800&q=80';
+    return `https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80`;
+  };
+
+  const isYouTubeThumbnail = (url?: string) => {
+    if (!url) return false;
+    return url.includes('youtube.com') || url.includes('ytimg.com');
   };
 
   const categories = ['Todos', ...Array.from(new Set(trainings.map(t => t.category)))];
@@ -78,10 +83,17 @@ const TrainingHub: React.FC = () => {
         return;
     }
 
-    // Auto-generate thumbnail if empty or user wants default
+    // Logic: auto-generate thumbnail if empty or if it looks like an old auto-generated one
     let finalThumbnail = formData.thumbnailUrl;
-    if (!finalThumbnail || finalThumbnail.trim() === '') {
-        finalThumbnail = getYouTubeThumbnail(formData.videoUrl);
+    const shouldUpdateThumbnail = !finalThumbnail || finalThumbnail.trim() === '' || isYouTubeThumbnail(finalThumbnail);
+
+    if (shouldUpdateThumbnail) {
+        const ytThumb = getYouTubeId(formData.videoUrl);
+        if (ytThumb) {
+             finalThumbnail = getYouTubeThumbnail(formData.videoUrl);
+        } else if (!finalThumbnail) {
+             finalThumbnail = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=800&q=80';
+        }
     }
 
     try {
@@ -91,7 +103,7 @@ const TrainingHub: React.FC = () => {
                 title: formData.title!,
                 description: formData.description || '',
                 videoUrl: formData.videoUrl!,
-                thumbnailUrl: finalThumbnail,
+                thumbnailUrl: finalThumbnail || '',
                 category: formData.category || 'Geral',
                 duration: formData.duration || 'N/A',
                 instructor: formData.instructor || user?.name || 'Automatik Team'
@@ -101,7 +113,7 @@ const TrainingHub: React.FC = () => {
                 title: formData.title!,
                 description: formData.description || '',
                 videoUrl: formData.videoUrl!,
-                thumbnailUrl: finalThumbnail,
+                thumbnailUrl: finalThumbnail || '',
                 category: formData.category || 'Geral',
                 duration: formData.duration || 'N/A',
                 instructor: user?.name || 'Automatik Team'
@@ -112,7 +124,8 @@ const TrainingHub: React.FC = () => {
         setFormData({});
         loadTrainings();
     } catch (e: any) {
-        alert("Erro ao salvar: " + e.message);
+        console.error(e);
+        alert("Erro ao salvar: " + (e.message || JSON.stringify(e)));
     }
   };
 
@@ -122,8 +135,8 @@ const TrainingHub: React.FC = () => {
     try {
         await TrainingService.delete(id);
         loadTrainings();
-    } catch (e) {
-        console.error(e);
+    } catch (e: any) {
+        alert("Erro ao excluir: " + e.message);
     }
   };
 
@@ -194,13 +207,13 @@ const TrainingHub: React.FC = () => {
                     <div className="absolute top-2 right-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                          <button 
                             onClick={(e) => handleOpenEdit(training, e)}
-                            className="p-2 bg-black/60 hover:bg-violet-600 text-white rounded backdrop-blur-sm transition-colors"
+                            className="p-2 bg-black/60 hover:bg-violet-600 text-white rounded backdrop-blur-sm transition-colors shadow-lg"
                         >
                             <Edit2 size={14} />
                         </button>
                         <button 
                             onClick={(e) => handleDelete(training.id, e)}
-                            className="p-2 bg-black/60 hover:bg-red-600 text-white rounded backdrop-blur-sm transition-colors"
+                            className="p-2 bg-black/60 hover:bg-red-600 text-white rounded backdrop-blur-sm transition-colors shadow-lg"
                         >
                             <Trash2 size={14} />
                         </button>
@@ -214,7 +227,13 @@ const TrainingHub: React.FC = () => {
                     alt={training.title} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100" 
                     onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=800&q=80';
+                        const target = e.target as HTMLImageElement;
+                        // Fallback logic
+                        if (target.src.includes('maxresdefault')) {
+                            target.src = target.src.replace('maxresdefault', 'mqdefault');
+                        } else {
+                            target.src = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=800&q=80';
+                        }
                     }}
                 />
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
@@ -315,7 +334,20 @@ const TrainingHub: React.FC = () => {
                     />
                  </div>
                  <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Thumbnail (Opcional)</label>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex justify-between">
+                        Thumbnail (Opcional)
+                         <button 
+                            type="button"
+                            onClick={() => {
+                                if (formData.videoUrl) {
+                                    setFormData({...formData, thumbnailUrl: getYouTubeThumbnail(formData.videoUrl)});
+                                }
+                            }}
+                            className="text-[10px] text-violet-400 hover:text-white flex items-center gap-1"
+                         >
+                            <RefreshCw size={10} /> Auto-Gerar
+                         </button>
+                    </label>
                     <input 
                         type="text" 
                         value={formData.thumbnailUrl || ''}

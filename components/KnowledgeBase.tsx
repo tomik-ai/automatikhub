@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { SOP, User, ProcessDetails } from '../types';
 import { UserService } from '../services/userService';
 import { DEPARTMENTS } from '../constants';
-import { Search, Plus, FileText, Tag, X, Edit2, Trash2, Save, Loader2, Check, AlertTriangle, Building2, Users, Calendar, ArrowRight, Book, ClipboardList, ListTree, Target, Activity, Upload, Filter } from 'lucide-react';
+import { Search, Plus, FileText, Tag, X, Edit2, Trash2, Save, Loader2, Check, AlertTriangle, Building2, Users, Calendar, ArrowRight, Book, ClipboardList, ListTree, Target, Activity, Upload, Filter, Lock } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -69,7 +69,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
     if (isAdminOrMod) {
         setIsTypeSelectionOpen(true);
     } else {
-        // Members go directly to Process creation
+        // Members go directly to Process creation, bypassing selection
         startCreate('process');
     }
   };
@@ -106,20 +106,12 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
       e.preventDefault();
     }
     
-    // Only admins/mods can edit standard docs or others' processes generally,
-    // but for now we follow the general "canEdit" rule for editing. 
-    // If strict ownership is needed, we would check user.email vs sop.created_by equivalent.
+    // Allow members to edit processes but not standard documents
     if (!isAdminOrMod) {
-        // Members typically shouldn't edit approved docs, but if they created a process?
-        // For simplicity based on prompt: "Documents only admin and moderators".
-        // It implies editing too. 
         if (sop.type === 'standard') {
              alert("Apenas administradores e moderadores podem editar Documentos Padrão.");
              return;
         }
-        // Allow members to edit processes? The prompt says "create a process". 
-        // We'll allow editing processes for everyone for now to be user friendly, or restrict to Admin/Mod if strict control needed.
-        // Assuming member can edit processes for collaborative work.
     }
 
     setFormData({
@@ -313,7 +305,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
             onClick={handleOpenCreateClick}
             className="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-2.5 rounded-lg font-bold uppercase tracking-wider text-xs flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(8,145,178,0.3)] hover:shadow-[0_0_20px_rgba(8,145,178,0.5)]"
           >
-            <Plus size={16} /> {isAdminOrMod ? 'Novo Documento' : 'Novo Processo'}
+            <Plus size={16} /> {isAdminOrMod ? 'Novo Documento/Processo' : 'Novo Processo'}
           </button>
         )}
       </div>
@@ -411,6 +403,11 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
                     </button>
                     {renderDeleteButton(sop.id, 14)}
                   </div>
+                )}
+                {!canEditSop(sop) && isAdminOrMod === false && sop.type === 'standard' && (
+                     <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                         <Lock size={14} className="text-slate-600" title="Somente Leitura" />
+                     </div>
                 )}
               </div>
               

@@ -2,6 +2,18 @@ import { getSupabase } from './supabaseClient';
 import { Training } from '../types';
 import { MOCK_TRAININGS } from '../constants';
 
+const mapTrainingFromDb = (row: any): Training => ({
+  id: row.id,
+  title: row.title,
+  description: row.description,
+  // Tenta ler snake_case (banco) ou camelCase (legado/memória)
+  videoUrl: row.video_url || row.videoUrl,
+  thumbnailUrl: row.thumbnail_url || row.thumbnailUrl || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80',
+  category: row.category || 'Geral',
+  duration: row.duration || 'N/A',
+  instructor: row.instructor || 'Automatik Team'
+});
+
 export const TrainingService = {
   getAll: async (): Promise<Training[]> => {
     const supabase = getSupabase();
@@ -24,33 +36,27 @@ export const TrainingService = {
         return [];
     }
 
-    return data.map((row: any) => ({
-      id: row.id,
-      title: row.title,
-      description: row.description,
-      videoUrl: row.videoUrl || row.video_url,
-      thumbnailUrl: row.thumbnailUrl || row.thumbnail_url || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80',
-      category: row.category,
-      duration: row.duration,
-      instructor: row.instructor
-    })) as Training[];
+    return data.map(mapTrainingFromDb);
   },
 
   create: async (training: Omit<Training, 'id'>): Promise<Training> => {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase não conectado");
 
+    // Mapeando explicitamente para snake_case para o Postgres
+    const dbPayload = {
+      title: training.title,
+      description: training.description,
+      video_url: training.videoUrl,
+      thumbnail_url: training.thumbnailUrl,
+      category: training.category,
+      duration: training.duration,
+      instructor: training.instructor
+    };
+
     const { data, error } = await supabase
       .from('trainings')
-      .insert([{
-        title: training.title,
-        description: training.description,
-        videoUrl: training.videoUrl,
-        thumbnailUrl: training.thumbnailUrl,
-        category: training.category,
-        duration: training.duration,
-        instructor: training.instructor
-      }])
+      .insert([dbPayload])
       .select()
       .single();
 
@@ -59,28 +65,26 @@ export const TrainingService = {
       throw error;
     }
     
-    const row = data;
-    return {
-      ...training,
-      id: row.id,
-    } as Training;
+    return mapTrainingFromDb(data);
   },
 
   update: async (training: Training): Promise<Training> => {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase não conectado");
 
+    const dbPayload = {
+      title: training.title,
+      description: training.description,
+      video_url: training.videoUrl,
+      thumbnail_url: training.thumbnailUrl,
+      category: training.category,
+      duration: training.duration,
+      instructor: training.instructor
+    };
+
     const { data, error } = await supabase
       .from('trainings')
-      .update({
-        title: training.title,
-        description: training.description,
-        videoUrl: training.videoUrl,
-        thumbnailUrl: training.thumbnailUrl,
-        category: training.category,
-        duration: training.duration,
-        instructor: training.instructor
-      })
+      .update(dbPayload)
       .eq('id', training.id)
       .select()
       .single();
@@ -90,12 +94,7 @@ export const TrainingService = {
       throw error;
     }
     
-    const row = data;
-    return {
-      ...training,
-      thumbnailUrl: row.thumbnailUrl || row.thumbnail_url,
-      videoUrl: row.videoUrl || row.video_url
-    } as Training;
+    return mapTrainingFromDb(data);
   },
 
   delete: async (id: string): Promise<void> => {
