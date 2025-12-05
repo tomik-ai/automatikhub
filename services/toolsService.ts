@@ -2,6 +2,19 @@ import { getSupabase } from './supabaseClient';
 import { Tool } from '../types';
 import { MOCK_TOOLS } from '../constants';
 
+// Helper function to map DB row to Tool type
+const mapToolFromDb = (row: any): Tool => ({
+  id: row.id,
+  name: row.name,
+  description: row.description,
+  url: row.url,
+  // Support both camelCase (legacy) and snake_case (standard) from DB
+  iconUrl: row.icon_url || row.iconUrl || '🔗', 
+  category: row.category,
+  // Support both camelCase and snake_case
+  target_department: row.target_department || row.targetDepartment || 'Geral'
+});
+
 export const ToolsService = {
   getAll: async (): Promise<Tool[]> => {
     const supabase = getSupabase();
@@ -21,89 +34,73 @@ export const ToolsService = {
     }
 
     if (!data || data.length === 0) {
-        // Se retornar vazio do banco, podemos retornar vazio mesmo.
-        // Mas se quiser garantir que o usuário veja algo no início:
-        // return MOCK_TOOLS;
         return [];
     }
 
-    // Map DB snake_case to CamelCase if necessary
-    return data.map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      url: row.url,
-      // Support both camelCase and snake_case from DB
-      iconUrl: row.iconUrl || row.icon_url || '🔗', 
-      category: row.category,
-      // Support both camelCase and snake_case
-      target_department: row.target_department || row.targetDepartment || 'Geral'
-    })) as Tool[];
+    return data.map(mapToolFromDb);
   },
 
   create: async (tool: Omit<Tool, 'id'>): Promise<Tool> => {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase não conectado");
 
-    // Prepare payload using camelCase keys as per previous version
+    // Explicitly map to snake_case for the database
+    const dbPayload = {
+      name: tool.name,
+      description: tool.description,
+      url: tool.url,
+      icon_url: tool.iconUrl, // Ensure snake_case
+      category: tool.category,
+      target_department: tool.target_department || 'Geral' // Ensure snake_case
+    };
+
     const { data, error } = await supabase
       .from('tools')
-      .insert([{
-        name: tool.name,
-        description: tool.description,
-        url: tool.url,
-        iconUrl: tool.iconUrl,
-        category: tool.category,
-        target_department: tool.target_department || 'Geral'
-      }])
-      .select()
-      .single();
+      .insert([dbPayload])
+      .select();
 
     if (error) {
       console.error('Erro ao criar ferramenta:', JSON.stringify(error, null, 2));
       throw error;
     }
     
-    // Map return safely
-    const row = data;
-    return {
-      ...tool,
-      id: row.id,
-      iconUrl: row.iconUrl || row.icon_url || tool.iconUrl,
-      target_department: row.target_department || row.targetDepartment || tool.target_department
-    } as Tool;
+    if (!data || data.length === 0) {
+       throw new Error("Erro desconhecido ao criar ferramenta.");
+    }
+
+    return mapToolFromDb(data[0]);
   },
 
   update: async (tool: Tool): Promise<Tool> => {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase não conectado");
 
+    const dbPayload = {
+      name: tool.name,
+      description: tool.description,
+      url: tool.url,
+      icon_url: tool.iconUrl,
+      category: tool.category,
+      target_department: tool.target_department
+    };
+
+    // Removed .single() to avoid PGRST116 if RLS policies are strict or row count varies
     const { data, error } = await supabase
       .from('tools')
-      .update({
-        name: tool.name,
-        description: tool.description,
-        url: tool.url,
-        iconUrl: tool.iconUrl,
-        category: tool.category,
-        target_department: tool.target_department
-      })
+      .update(dbPayload)
       .eq('id', tool.id)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error('Erro ao atualizar ferramenta:', JSON.stringify(error, null, 2));
       throw error;
     }
     
-    // Map return safely
-    const row = data;
-    return {
-      ...tool,
-      iconUrl: row.iconUrl || row.icon_url || tool.iconUrl,
-      target_department: row.target_department || row.targetDepartment || tool.target_department
-    } as Tool;
+    if (!data || data.length === 0) {
+      throw new Error("Ferramenta não encontrada ou erro de permissão.");
+    }
+    
+    return mapToolFromDb(data[0]);
   },
 
   delete: async (id: string): Promise<void> => {
@@ -118,7 +115,7 @@ export const ToolsService = {
     if (error) {
       console.error("Erro ao deletar ferramenta:", JSON.stringify(error, null, 2));
       if (error.code === '42501') {
-        throw new Error("Permissão negada. Verifique as Policies (RLS) no Supabase para a tabela 'tools'.");
+        throw new Error("Permissão negada. Verifique as Policies (RLS) no Supabase.");
       }
       throw error;
     }
