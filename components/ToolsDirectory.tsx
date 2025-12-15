@@ -355,4 +355,32 @@ const ToolsDirectory: React.FC<ToolsDirectoryProps> = ({ tools, user, onAddTool,
                       className="w-full bg-slate-950 border border-white/10 rounded-lg px-3 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                     >
                       <option value="Geral">Geral (Todos)</option>
-                      {DEPARTMENTS
+                      {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+                <button 
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 text-slate-400 hover:text-white text-sm font-medium transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleSave}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg shadow-indigo-900/20 transition-all"
+                >
+                  {isEditing ? 'Salvar Alterações' : 'Adicionar Link'}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ToolsDirectory;
