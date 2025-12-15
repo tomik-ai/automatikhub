@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, User } from '../types';
 import { UserService } from '../services/userService';
-import { Home, CheckSquare, Book, Wrench, Bot, LogOut, Shield, UserCog, Video, X, Camera, Save, Lock, Upload, Rocket, Activity } from 'lucide-react';
+import { Home, CheckSquare, Book, Wrench, Bot, LogOut, Shield, UserCog, Video, X, Camera, Save, Lock, Upload, Rocket, Activity, Link } from 'lucide-react';
 import { LOGO_URL, COMPANY_NAME } from '../constants';
 
 interface SidebarProps {
@@ -26,6 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isOpen, se
     { id: View.TRAINING, label: 'TREINAMENTOS', icon: <Video size={18} /> },
     { id: View.KNOWLEDGE_BASE, label: 'DOCUMENTOS', icon: <Book size={18} /> },
     { id: View.TOOLS, label: 'FERRAMENTAS', icon: <Wrench size={18} /> },
+    { id: View.UTM_GENERATOR, label: 'GERADOR UTM', icon: <Link size={18} /> },
     { id: View.AI_ASSISTANT, label: 'AUTOMATIK AI', icon: <Bot size={18} /> },
   ];
 

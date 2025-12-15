@@ -1,4 +1,5 @@
 
+
 export interface SOP {
   id: string;
   title: string;
@@ -56,11 +57,12 @@ export interface Training {
 
 export enum View {
   DASHBOARD = 'dashboard',
-  OVERVIEW = 'overview', // Novo Item
+  OVERVIEW = 'overview',
   ONBOARDING = 'onboarding',
   JOURNEY = 'journey',
   KNOWLEDGE_BASE = 'knowledge_base',
   TOOLS = 'tools',
+  UTM_GENERATOR = 'utm_generator', // Novo Item
   TRAINING = 'training',
   AI_ASSISTANT = 'ai_assistant',
   ADMIN = 'admin'

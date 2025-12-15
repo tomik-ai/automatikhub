@@ -9,6 +9,7 @@ import AiAssistant from './components/AiAssistant';
 import AdminPanel from './components/AdminPanel';
 import TrainingHub from './components/TrainingHub';
 import Overview from './components/Overview'; // New Import
+import UtmGenerator from './components/UtmGenerator'; // New Import
 import Login from './components/Login';
 import { View, OnboardingStep, User, SOP, Tool } from './types';
 import { StorageService } from './services/storage';
@@ -258,6 +259,8 @@ const App: React.FC = () => {
           onEditTool={handleEditTool}
           onDeleteTool={handleDeleteTool}
         />;
+      case View.UTM_GENERATOR:
+        return <UtmGenerator />;
       case View.TRAINING:
         return <TrainingHub />;
       case View.AI_ASSISTANT:
