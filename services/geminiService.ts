@@ -1,59 +1,121 @@
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+
 import { MOCK_SOPS, MOCK_TOOLS } from '../constants';
 
-// Construct a context string from the mock SOPs to feed into the model
+const GROQ_API_URL = "https://api.groq.com/openai/v1";
+
 const SOP_CONTEXT = MOCK_SOPS.map(sop => 
   `Título: ${sop.title}\nCategoria: ${sop.category}\nConteúdo: ${sop.content}\nTags: ${sop.tags.join(', ')}`
 ).join('\n\n---\n\n');
 
-// Construct a context string from the tools
 const TOOLS_CONTEXT = MOCK_TOOLS.map(tool =>
   `Ferramenta: ${tool.name}\nDescrição: ${tool.description}\nCategoria: ${tool.category}\nURL: ${tool.url}`
 ).join('\n\n---\n\n');
 
+/**
+ * Auxiliar para converter base64 em Blob para envio de arquivos
+ */
+const base64ToBlob = (base64: string, mimeType: string): Blob => {
+  const byteCharacters = atob(base64);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  return new Blob([byteArray], { type: mimeType });
+};
+
 export const sendMessageToGemini = async (message: string): Promise<string> => {
-  // Always use process.env.API_KEY directly and check its availability as per SDK guidelines
   if (!process.env.API_KEY) {
-    return "Erro: API Key não configurada. Por favor verifique as configurações ou variáveis de ambiente.";
+    return "Erro: Groq API Key não configurada no ambiente.";
   }
 
   try {
-    // Correct initialization using the provided environment variable directly
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    
-    const systemInstruction = `
-      Você é o assistente virtual inteligente da AutomatikHub, o portal interno da empresa Automatik.
-      Seu objetivo é ajudar colaboradores a encontrar informações sobre processos, cultura, ferramentas e regras da empresa.
-      
-      Use o seguinte contexto (Base de Conhecimento / SOPs):
-      ${SOP_CONTEXT}
-      
-      Use o seguinte contexto (Ferramentas da Empresa):
-      ${TOOLS_CONTEXT}
-      
-      Regras:
-      1. Responda sempre em Português do Brasil.
-      2. Seja cordial, profissional e direto.
-      3. Se a informação não estiver no contexto fornecido, diga que não encontrou a informação específica nos documentos atuais e sugira contatar o RH ou o gestor.
-      4. Se perguntarem sobre comunicação ou gestão de tarefas, priorize as ferramentas listadas (WhatsApp e ClickUp).
-      5. Não invente informações sobre políticas da empresa que não estejam no contexto.
-      6. Formate a resposta com Markdown para melhor leitura (listas, negrito, etc) se necessário.
-    `;
-
-    // Calling generateContent with the model name and prompt directly
-    const response: GenerateContentResponse = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: message,
-      config: {
-        systemInstruction: systemInstruction,
-        temperature: 0.3, // Low temperature for more factual answers based on context
-      }
+    const response = await fetch(`${GROQ_API_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "system",
+            content: `Você é o assistente virtual da AutomatikHub. Responda em PT-BR de forma direta usando Markdown. 
+            Contexto da empresa: ${SOP_CONTEXT} | ${TOOLS_CONTEXT}`
+          },
+          { role: "user", content: message }
+        ],
+        temperature: 0.5,
+        max_tokens: 1024
+      })
     });
 
-    // Directly access the .text property from GenerateContentResponse
-    return response.text || "Desculpe, não consegui gerar uma resposta no momento.";
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || "Não foi possível gerar uma resposta via Groq.";
   } catch (error) {
-    console.error("Error communicating with Gemini:", error);
-    return "Ocorreu um erro ao tentar contatar o assistente. Tente novamente mais tarde.";
+    console.error("Erro na comunicação com Groq:", error);
+    return "Ocorreu um erro ao tentar contatar o assistente via Groq API.";
+  }
+};
+
+/**
+ * Transcreve um áudio usando Whisper no Groq e depois formata o texto com Llama 3.
+ */
+export const transcribeAudioToDoc = async (base64Audio: string, mimeType: string): Promise<string> => {
+  if (!process.env.API_KEY) throw new Error("API Key não configurada.");
+
+  try {
+    // 1. Converter Base64 para Blob para o FormData
+    const audioBlob = base64ToBlob(base64Audio, mimeType);
+    const formData = new FormData();
+    formData.append("file", audioBlob, "recording.webm");
+    formData.append("model", "whisper-large-v3");
+    formData.append("language", "pt");
+    formData.append("response_format", "json");
+
+    // 2. Transcrição com Whisper
+    const transcriptionRes = await fetch(`${GROQ_API_URL}/audio/transcriptions`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.API_KEY}`
+      },
+      body: formData
+    });
+
+    const transcriptionData = await transcriptionRes.json();
+    const rawText = transcriptionData.text;
+
+    if (!rawText) return "";
+
+    // 3. Formatação do texto transcrito em Markdown usando Llama 3
+    const formattingRes = await fetch(`${GROQ_API_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "system",
+            content: "Você é um especialista em documentação técnica da Automatik. Sua tarefa é pegar a transcrição bruta de um áudio e transformá-la em um documento Markdown profissional, organizado com títulos (#), listas e negrito."
+          },
+          {
+            role: "user",
+            content: `Transcrição bruta: "${rawText}". Transforme isso em um documento estruturado.`
+          }
+        ],
+        temperature: 0.3
+      })
+    });
+
+    const formattingData = await formattingRes.json();
+    return formattingData.choices?.[0]?.message?.content || rawText;
+
+  } catch (error) {
+    console.error("Erro na transcrição/formatação via Groq:", error);
+    throw error;
   }
 };

@@ -1,5 +1,7 @@
 {
   "name": "AutomatikHub",
   "description": "Central de onboarding, documentos e ferramentas da Automatik.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }
