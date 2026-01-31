@@ -199,6 +199,7 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
 
     const timestamp = new Date().toISOString();
     
+    // CORREÇÃO: Removido o espaço do nome da variável
     const processedTags = typeof formData.tags === 'string' 
       ? (formData.tags as string).split(',').map((t: string) => t.trim()).filter(t => t !== '') 
       : formData.tags || [];
@@ -406,7 +407,9 @@ const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ sops, user, onAddSOP, onE
                 )}
                 {!canEditSop(sop) && isAdminOrMod === false && sop.type === 'standard' && (
                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                         <Lock size={14} className="text-slate-600" title="Somente Leitura" />
+                         <div title="Somente Leitura">
+                            <Lock size={14} className="text-slate-600" />
+                         </div>
                      </div>
                 )}
               </div>

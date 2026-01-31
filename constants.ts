@@ -1,7 +1,7 @@
 import { SOP, Tool, OnboardingStep, Department, Training } from './types';
 
-export const COMPANY_NAME = "AutomatikLabs";
-export const APP_NAME = "AutomatikLabs";
+export const COMPANY_NAME = "AutomatikHub";
+export const APP_NAME = "AutomatikHub";
 
 // Updated with the specific logo URL provided
 export const LOGO_URL = "https://prhiuflqhuvlgqysegjv.supabase.co/storage/v1/object/public/FotosPaginas/LogoATK.png";

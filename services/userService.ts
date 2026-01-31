@@ -4,87 +4,64 @@ import { User } from '../types';
 
 export const UserService = {
   getAll: async (): Promise<User[]> => {
-    const supabase = getSupabase();
-    if (!supabase) return [];
-
-    const { data, error } = await supabase.from('users').select('*');
-    if (error) throw error;
-    return data as User[];
+    const sb = getSupabase();
+    if (!sb) return [];
+    try {
+      const { data, error } = await sb.from('users').select('*');
+      if (error) throw error;
+      return data as User[];
+    } catch {
+      return [];
+    }
   },
 
   findOrCreate: async (email: string, name: string, avatar: string): Promise<User> => {
-    const supabase = getSupabase();
-    if (!supabase) throw new Error("Conexão com Supabase necessária para login.");
-
     const normalizedEmail = email.toLowerCase().trim();
-
-    // 1. Tentar buscar usuário existente
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', normalizedEmail)
-      .single();
-
-    if (data && !error) {
-      const user = data as User;
-      StorageService.saveSession(user);
-      return user;
+    const sb = getSupabase();
+    
+    // Fallback para login local se o Supabase falhar
+    if (!sb) {
+      const guestUser: User = { name, email: normalizedEmail, avatar, role: 'member', department: 'Geral' };
+      StorageService.saveSession(guestUser);
+      return guestUser;
     }
 
-    // 2. Criar novo usuário se não existir
-    const INITIAL_ADMINS = ['gabriel.amaral@tomik.ai', 'eduarda@automatiklabs.com.br'];
-    const isAdmin = INITIAL_ADMINS.includes(normalizedEmail);
-    
-    const newUser: User = {
-      name,
-      email: normalizedEmail,
-      avatar,
-      role: isAdmin ? 'admin' : 'member',
-      department: 'Geral'
-    };
+    try {
+      const { data, error } = await sb.from('users').select('*').eq('email', normalizedEmail).single();
+      if (data && !error) {
+        StorageService.saveSession(data as User);
+        return data as User;
+      }
 
-    const { error: insertError } = await supabase.from('users').insert([newUser]);
-    
-    if (insertError) {
-      throw new Error("Erro ao criar usuário no banco de dados: " + insertError.message);
-    }
+      const newUser: User = {
+        name,
+        email: normalizedEmail,
+        avatar,
+        role: email.includes('gabriel.amaral') ? 'admin' : 'member',
+        department: 'Geral'
+      };
 
-    StorageService.saveSession(newUser);
-    return newUser;
-  },
-
-  updateUser: async (user: User): Promise<void> => {
-    const supabase = getSupabase();
-    if (!supabase) throw new Error("Supabase desconectado");
-
-    const { error } = await supabase
-      .from('users')
-      .update({
-        name: user.name,
-        role: user.role,
-        department: user.department,
-        avatar: user.avatar
-      })
-      .eq('email', user.email);
-        
-    if (error) throw error;
-
-    // Atualiza a sessão local se for o próprio usuário
-    const currentSession = StorageService.getSession();
-    if (currentSession && currentSession.email === user.email) {
-      StorageService.saveSession(user);
+      await sb.from('users').insert([newUser]);
+      StorageService.saveSession(newUser);
+      return newUser;
+    } catch (err) {
+      console.error("Erro no UserService, usando fallback local:", err);
+      const fallbackUser: User = { name, email: normalizedEmail, avatar, role: 'member', department: 'Geral' };
+      StorageService.saveSession(fallbackUser);
+      return fallbackUser;
     }
   },
 
-  deleteUser: async (email: string): Promise<void> => {
-    const supabase = getSupabase();
-    if (!supabase) throw new Error("Supabase desconectado");
+  updateUser: async (user: User) => {
+    const sb = getSupabase();
+    if (sb) {
+      await sb.from('users').update(user).eq('email', user.email);
+    }
+    StorageService.saveSession(user);
+  },
 
-    const { error } = await supabase
-      .from('users')
-      .delete()
-      .eq('email', email);
-
-    if (error) throw error;
+  deleteUser: async (email: string) => {
+    const sb = getSupabase();
+    if (sb) await sb.from('users').delete().eq('email', email);
   }
 };

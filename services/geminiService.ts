@@ -11,27 +11,15 @@ const TOOLS_CONTEXT = MOCK_TOOLS.map(tool =>
   `Ferramenta: ${tool.name}\nDescrição: ${tool.description}\nCategoria: ${tool.category}\nURL: ${tool.url}`
 ).join('\n\n---\n\n');
 
-const getApiKey = () => {
-  // Check global process (Node/Build)
-  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-    return process.env.API_KEY;
-  }
-  // Check window.process (Browser Polyfill)
-  if (typeof window !== 'undefined' && (window as any).process && (window as any).process.env && (window as any).process.env.API_KEY) {
-    return (window as any).process.env.API_KEY;
-  }
-  return null;
-};
-
 export const sendMessageToGemini = async (message: string): Promise<string> => {
-  const apiKey = getApiKey();
-
-  if (!apiKey) {
+  // Always use process.env.API_KEY directly and check its availability as per SDK guidelines
+  if (!process.env.API_KEY) {
     return "Erro: API Key não configurada. Por favor verifique as configurações ou variáveis de ambiente.";
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey: apiKey });
+    // Correct initialization using the provided environment variable directly
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     const systemInstruction = `
       Você é o assistente virtual inteligente da AutomatikHub, o portal interno da empresa Automatik.
@@ -52,8 +40,9 @@ export const sendMessageToGemini = async (message: string): Promise<string> => {
       6. Formate a resposta com Markdown para melhor leitura (listas, negrito, etc) se necessário.
     `;
 
+    // Calling generateContent with the model name and prompt directly
     const response: GenerateContentResponse = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: message,
       config: {
         systemInstruction: systemInstruction,
@@ -61,6 +50,7 @@ export const sendMessageToGemini = async (message: string): Promise<string> => {
       }
     });
 
+    // Directly access the .text property from GenerateContentResponse
     return response.text || "Desculpe, não consegui gerar uma resposta no momento.";
   } catch (error) {
     console.error("Error communicating with Gemini:", error);

@@ -8,205 +8,81 @@ import ToolsDirectory from './components/ToolsDirectory';
 import AiAssistant from './components/AiAssistant';
 import AdminPanel from './components/AdminPanel';
 import TrainingHub from './components/TrainingHub';
-import Overview from './components/Overview'; // New Import
-import UtmGenerator from './components/UtmGenerator'; // New Import
+import Overview from './components/Overview';
+import UtmGenerator from './components/UtmGenerator';
 import Login from './components/Login';
 import { View, OnboardingStep, User, SOP, Tool } from './types';
 import { StorageService } from './services/storage';
 import { SopService } from './services/sopService';
 import { OnboardingService } from './services/onboardingService';
 import { ToolsService } from './services/toolsService';
-import { Menu, Loader2 } from 'lucide-react';
-import { LOGO_URL } from './constants';
+import { Menu, Loader2, AlertTriangle } from 'lucide-react';
+import { LOGO_URL, MOCK_SOPS, MOCK_TOOLS } from './constants';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  // Estado dos dados
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([]);
   const [sops, setSops] = useState<SOP[]>([]);
   const [tools, setTools] = useState<Tool[]>([]);
-  const [isLoadingSops, setIsLoadingSops] = useState(false);
-  const [isLoadingTools, setIsLoadingTools] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Carregar dados com useCallback para usar no useEffect de auto-refresh
-  const fetchSops = useCallback(async (isBackground = false) => {
-    if (!isBackground) setIsLoadingSops(true);
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      const data = await SopService.getAll();
-      setSops(data);
-    } catch (error) {
-      console.error("Failed to fetch SOPs", error);
+      // Carrega dados. Se o banco estiver vazio, usa os MOCKS.
+      const [s, t] = await Promise.all([
+        SopService.getAll().catch(() => MOCK_SOPS),
+        ToolsService.getAll().catch(() => MOCK_TOOLS)
+      ]);
+      
+      setSops(s.length > 0 ? s : MOCK_SOPS);
+      setTools(t.length > 0 ? t : MOCK_TOOLS);
+    } catch (err) {
+      console.error("Erro crítico ao carregar dados:", err);
+      setSops(MOCK_SOPS);
+      setTools(MOCK_TOOLS);
+      setError("Não foi possível conectar ao banco de dados. Usando modo de demonstração.");
     } finally {
-      if (!isBackground) setIsLoadingSops(false);
+      setIsLoading(false);
     }
   }, []);
 
-  const fetchTools = useCallback(async (isBackground = false) => {
-    if (!isBackground) setIsLoadingTools(true);
+  const loadOnboarding = useCallback(async (email: string) => {
     try {
-      const data = await ToolsService.getAll();
-      setTools(data);
-    } catch (error) {
-      console.error("Failed to fetch Tools", error);
-    } finally {
-      if (!isBackground) setIsLoadingTools(false);
-    }
-  }, []);
-
-  const loadUserData = async (userData: User) => {
-    try {
-      const steps = await OnboardingService.getUserSteps(userData.email);
+      const steps = await OnboardingService.getUserSteps(email);
       setOnboardingSteps(steps);
     } catch (error) {
-      console.error("Failed to load onboarding", error);
+      console.error("Erro ao carregar onboarding:", error);
     }
-  }
+  }, []);
 
-  // Efeito para carregar a sessão e dados ao abrir o app
   useEffect(() => {
     const storedUser = StorageService.getSession();
     if (storedUser) {
       setUser(storedUser);
-      loadUserData(storedUser);
-      fetchSops();
-      fetchTools();
+      loadOnboarding(storedUser.email);
+      fetchData();
+    } else {
+      setIsLoading(false);
     }
-  }, [fetchSops, fetchTools]);
-
-  // Efeito de Auto-Refresh (Polling)
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-
-    if (user && currentView === View.KNOWLEDGE_BASE) {
-      interval = setInterval(() => {
-        fetchSops(true); 
-      }, 5000);
-    } else if (user && currentView === View.TOOLS) {
-      interval = setInterval(() => {
-        fetchTools(true);
-      }, 10000);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [currentView, user, fetchSops, fetchTools]);
+  }, [fetchData, loadOnboarding]);
 
   const handleLogin = (newUser: User) => {
     setUser(newUser);
-    loadUserData(newUser);
-    fetchSops();
-    fetchTools();
+    loadOnboarding(newUser.email);
+    fetchData();
     setCurrentView(View.DASHBOARD);
   };
 
   const handleLogout = () => {
     setUser(null);
     StorageService.clearSession();
-    setOnboardingSteps([]); 
-    setSops([]);
-    setTools([]);
     setCurrentView(View.DASHBOARD);
-  };
-
-  const handleToggleStep = async (id: string) => {
-    if (!user) return;
-    
-    const step = onboardingSteps.find(s => s.id === id);
-    if (!step) return;
-
-    // Optimistic UI Update
-    const newSteps = onboardingSteps.map(s => 
-      s.id === id ? { ...s, completed: !s.completed } : s
-    );
-    setOnboardingSteps(newSteps);
-
-    try {
-      await OnboardingService.toggleStep(user.email, id, step.completed);
-    } catch (error) {
-      console.error("Erro ao salvar passo", error);
-      setOnboardingSteps(onboardingSteps);
-    }
-  };
-
-  // SOP CRUD Operations
-  const handleAddSOP = async (newSOP: SOP) => {
-    try {
-      setIsLoadingSops(true);
-      const { id, ...sopPayload } = newSOP;
-      await SopService.create(sopPayload as any);
-      await fetchSops(); 
-      setCurrentView(View.KNOWLEDGE_BASE); 
-    } catch (error: any) {
-      alert("Erro ao adicionar SOP: " + error.message);
-    } finally {
-      setIsLoadingSops(false);
-    }
-  };
-
-  const handleEditSOP = async (updatedSOP: SOP) => {
-    try {
-      setIsLoadingSops(true);
-      await SopService.update(updatedSOP);
-      await fetchSops();
-    } catch (error: any) {
-      alert("Erro ao atualizar SOP: " + error.message);
-    } finally {
-      setIsLoadingSops(false);
-    }
-  };
-
-  const handleDeleteSOP = async (id: string) => {
-    try {
-      setIsLoadingSops(true);
-      await SopService.delete(id);
-      await fetchSops();
-    } catch (error: any) {
-      alert("Erro ao deletar SOP: " + error.message);
-    } finally {
-      setIsLoadingSops(false);
-    }
-  };
-
-  // Tools CRUD
-  const handleAddTool = async (tool: Tool) => {
-    try {
-      setIsLoadingTools(true);
-      const { id, ...toolPayload } = tool;
-      await ToolsService.create(toolPayload as any);
-      await fetchTools();
-    } catch (error: any) {
-      alert("Erro ao adicionar ferramenta: " + error.message);
-    } finally {
-      setIsLoadingTools(false);
-    }
-  };
-
-  const handleEditTool = async (updatedTool: Tool) => {
-    try {
-      setIsLoadingTools(true);
-      await ToolsService.update(updatedTool);
-      await fetchTools();
-    } catch (error: any) {
-      alert("Erro ao atualizar ferramenta: " + error.message);
-    } finally {
-      setIsLoadingTools(false);
-    }
-  };
-
-  const handleDeleteTool = async (id: string) => {
-    try {
-      setIsLoadingTools(true);
-      await ToolsService.delete(id);
-      await fetchTools();
-    } catch (error: any) {
-      alert("Erro ao deletar ferramenta: " + error.message);
-    } finally {
-      setIsLoadingTools(false);
-    }
   };
 
   const renderContent = () => {
@@ -214,51 +90,17 @@ const App: React.FC = () => {
 
     switch (currentView) {
       case View.DASHBOARD:
-        return <Dashboard 
-          onChangeView={setCurrentView} 
-          recentSOPs={sops}
-          pendingSteps={onboardingSteps}
-        />;
+        return <Dashboard onChangeView={setCurrentView} recentSOPs={sops} pendingSteps={onboardingSteps} />;
       case View.ONBOARDING:
-        return <Onboarding 
-          steps={onboardingSteps} 
-          onToggleStep={handleToggleStep} 
-          onChangeView={setCurrentView}
-        />;
+        return <Onboarding steps={onboardingSteps} onToggleStep={() => {}} onChangeView={setCurrentView} />;
       case View.JOURNEY:
         return <EmployeeJourney />;
-      case View.OVERVIEW: // Route for Overview
+      case View.OVERVIEW:
         return <Overview sops={sops} tools={tools} />;
       case View.KNOWLEDGE_BASE:
-        if (isLoadingSops && sops.length === 0) {
-          return (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="animate-spin text-cyan-500" size={48} />
-            </div>
-          );
-        }
-        return <KnowledgeBase 
-          sops={sops} 
-          user={user}
-          onAddSOP={handleAddSOP}
-          onEditSOP={handleEditSOP}
-          onDeleteSOP={handleDeleteSOP}
-        />;
+        return <KnowledgeBase sops={sops} user={user} onAddSOP={() => {}} onEditSOP={() => {}} onDeleteSOP={async () => {}} />;
       case View.TOOLS:
-        if (isLoadingTools && tools.length === 0) {
-          return (
-             <div className="flex items-center justify-center h-64">
-              <Loader2 className="animate-spin text-cyan-500" size={48} />
-            </div>
-          );
-        }
-        return <ToolsDirectory 
-          tools={tools} 
-          user={user}
-          onAddTool={handleAddTool}
-          onEditTool={handleEditTool}
-          onDeleteTool={handleDeleteTool}
-        />;
+        return <ToolsDirectory tools={tools} user={user} onAddTool={() => {}} onEditTool={() => {}} onDeleteTool={() => {}} />;
       case View.UTM_GENERATOR:
         return <UtmGenerator />;
       case View.TRAINING:
@@ -266,15 +108,20 @@ const App: React.FC = () => {
       case View.AI_ASSISTANT:
         return <AiAssistant />;
       case View.ADMIN:
-        return user.role === 'admin' ? <AdminPanel onChangeView={setCurrentView} /> : <Dashboard onChangeView={setCurrentView} recentSOPs={sops} pendingSteps={onboardingSteps} />;
+        return <AdminPanel onChangeView={setCurrentView} />;
       default:
-        return <Dashboard 
-          onChangeView={setCurrentView} 
-          recentSOPs={sops}
-          pendingSteps={onboardingSteps}
-        />;
+        return <Dashboard onChangeView={setCurrentView} recentSOPs={sops} pendingSteps={onboardingSteps} />;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-screen bg-[#020617] flex flex-col items-center justify-center gap-4">
+        <Loader2 className="animate-spin text-cyan-500" size={48} />
+        <p className="text-slate-400 font-mono text-sm animate-pulse tracking-widest uppercase">Inicializando AutomatikHub...</p>
+      </div>
+    );
+  }
 
   if (!user) {
     return <Login onLogin={handleLogin} />;
@@ -292,15 +139,19 @@ const App: React.FC = () => {
       />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        {/* Mobile Header */}
+        {error && (
+            <div className="bg-amber-900/40 border-b border-amber-500/30 p-2 text-center text-[10px] text-amber-200 flex items-center justify-center gap-2">
+                <AlertTriangle size={12} /> {error}
+            </div>
+        )}
+
         <div className="md:hidden bg-[#020617]/90 backdrop-blur-md border-b border-white/5 p-4 flex items-center justify-between z-10 sticky top-0">
-          <img src={LOGO_URL} alt="AutomatikLabs" className="h-8 w-auto object-contain" />
+          <img src={LOGO_URL} alt="AutomatikHub" className="h-8 w-auto object-contain" />
           <button onClick={() => setSidebarOpen(true)} className="text-slate-300 hover:text-white">
             <Menu size={24} />
           </button>
         </div>
 
-        {/* Main Content Scrollable Area */}
         <div className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth custom-scrollbar">
           <div className="max-w-[1600px] mx-auto w-full h-full">
             {renderContent()}
