@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { User } from '../types';
 import { UserService } from '../services/userService';
@@ -42,7 +43,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       const normalizedEmail = email.toLowerCase().trim();
 
       if (password !== '123456') {
-        throw new Error('Senha incorreta.');
+        throw new Error('Senha de acesso incorreta.');
       }
 
       // Simulating auth logic
@@ -58,14 +59,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       onLogin(user);
 
     } catch (err: any) {
-      setError(err.message || 'Ocorreu um erro ao fazer login.');
+      setError(err.message || 'Falha na autenticação do sistema.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#020617] flex items-center justify-center p-4 relative overflow-hidden w-full">
       {/* Cyber Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{ animationDuration: '4s' }} />
@@ -73,7 +74,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '50px 50px' }}></div>
       </div>
 
-      <div className="w-full max-w-[400px] relative z-10 perspective-1000">
+      <div className="w-full max-w-[400px] relative z-10 animate-in fade-in zoom-in duration-500">
         <div className="bg-[#0B1120]/60 backdrop-blur-xl rounded-2xl border border-white/10 shadow-[0_0_50px_-10px_rgba(0,0,0,0.5)] overflow-hidden">
           
           {/* Header */}
@@ -86,15 +87,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 className="w-[300px] h-auto object-contain drop-shadow-[0_0_15px_rgba(6,182,212,0.3)]" 
               />
             </div>
-            <p className="text-cyan-400/80 text-xs font-bold uppercase tracking-[0.2em]">Restricted Access</p>
+            <p className="text-cyan-400/80 text-[10px] font-bold uppercase tracking-[0.3em]">Autenticação Necessária</p>
           </div>
 
           {/* Form */}
           <div className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-6">
               
-              <div className="space-y-1.5">
-                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider ml-1">Identity</label>
+              <div className="space-y-2">
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider ml-1">Terminal ID</label>
                 <div className="relative group">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
                   <input
@@ -102,29 +103,31 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     placeholder="E-mail corporativo"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-[#020617]/50 border border-white/10 text-white rounded-lg focus:outline-none focus:border-cyan-500/50 focus:shadow-[0_0_20px_-5px_rgba(6,182,212,0.2)] placeholder-slate-600 transition-all font-mono text-sm"
+                    className="w-full pl-10 pr-4 py-3 bg-[#020617]/50 border border-white/10 text-white rounded-lg focus:outline-none focus:border-cyan-500/50 focus:shadow-[0_0_20px_-5px_rgba(6,182,212,0.1)] placeholder-slate-700 transition-all font-mono text-sm"
                     disabled={isLoading}
+                    autoComplete="email"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs text-slate-400 font-bold uppercase tracking-wider ml-1">Passcode</label>
+              <div className="space-y-2">
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider ml-1">Access Key</label>
                 <div className="relative group">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
                   <input
                     type="password"
-                    placeholder="Senha de acesso"
+                    placeholder="Senha do sistema"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-[#020617]/50 border border-white/10 text-white rounded-lg focus:outline-none focus:border-cyan-500/50 focus:shadow-[0_0_20px_-5px_rgba(6,182,212,0.2)] placeholder-slate-600 transition-all font-mono text-sm"
+                    className="w-full pl-10 pr-4 py-3 bg-[#020617]/50 border border-white/10 text-white rounded-lg focus:outline-none focus:border-cyan-500/50 focus:shadow-[0_0_20px_-5px_rgba(6,182,212,0.1)] placeholder-slate-700 transition-all font-mono text-sm"
                     disabled={isLoading}
+                    autoComplete="current-password"
                   />
                 </div>
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 text-red-400 text-xs font-bold bg-red-950/30 p-3 rounded-lg border border-red-500/20">
+                <div className="flex items-center gap-2 text-red-400 text-[11px] font-bold bg-red-950/30 p-3 rounded-lg border border-red-500/20 animate-in shake-in duration-300">
                   <AlertCircle size={14} className="shrink-0" />
                   {error}
                 </div>
@@ -133,15 +136,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-lg transition-all shadow-[0_0_20px_-5px_rgba(8,145,178,0.4)] hover:shadow-[0_0_30px_-5px_rgba(8,145,178,0.6)] flex items-center justify-center gap-2 group mt-4 uppercase tracking-wide text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-4 rounded-xl transition-all shadow-[0_0_20px_-5px_rgba(8,145,178,0.4)] hover:shadow-[0_0_30px_-5px_rgba(8,145,178,0.6)] flex items-center justify-center gap-2 group mt-4 uppercase tracking-widest text-xs disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" /> Authenticating...
+                    <Loader2 size={16} className="animate-spin" /> Processando...
                   </>
                 ) : (
                   <>
-                    Connect to Portal
+                    Acessar Painel
                     <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
@@ -149,10 +152,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </form>
 
             <div className="mt-8 text-center">
-              <p className="text-[10px] text-slate-600 font-mono">
-                SECURE CONNECTION ESTABLISHED v2.1.0
+              <p className="text-[9px] text-slate-700 font-mono tracking-tighter uppercase">
+                Automatik Labs High-Sec Protocol v3.0
                 <br/>
-                AUTOMATIK LABS © {new Date().getFullYear()}
+                © {new Date().getFullYear()} Todos os direitos reservados
               </p>
             </div>
           </div>

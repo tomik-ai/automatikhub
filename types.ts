@@ -1,17 +1,15 @@
 
-
 export interface SOP {
   id: string;
   title: string;
   category: 'HR' | 'Tech' | 'Vendas' | 'Operacional' | 'Geral';
-  content: string; // For Processes, this is the "Step by Step Description"
+  content: string; 
   lastUpdated: string;
   tags: string[];
   deleted_at?: string | null;
   responsible_department?: Department;
-  responsible_users?: string[]; // Array of emails
+  responsible_users?: string[];
   
-  // New fields for Process Management
   type: 'standard' | 'process';
   process_details?: ProcessDetails;
 }
@@ -22,7 +20,7 @@ export interface ProcessDetails {
   scope_excludes: string;
   materials: string;
   metrics: string;
-  created_by?: string; // Manual text field or auto-filled
+  created_by?: string;
 }
 
 export interface Tool {
@@ -30,9 +28,9 @@ export interface Tool {
   name: string;
   description: string;
   url: string;
-  iconUrl: string; // Using a placeholder or emoji char for simplicity
+  iconUrl: string;
   category: 'Produtividade' | 'Dev' | 'Comunicação' | 'Design' | 'Vendas' | 'Suporte' | 'Marketing';
-  target_department?: Department | 'Geral'; // Control visibility by department
+  target_department?: Department | 'Geral';
 }
 
 export interface OnboardingStep {
@@ -41,14 +39,14 @@ export interface OnboardingStep {
   description: string;
   completed: boolean;
   link?: string;
-  externalLink?: string; // New field for direct external links (e.g. WhatsApp)
+  externalLink?: string;
 }
 
 export interface Training {
   id: string;
   title: string;
   description: string;
-  videoUrl: string; // Embed URL or Link
+  videoUrl: string;
   thumbnailUrl: string;
   category: string;
   duration: string;
@@ -62,10 +60,12 @@ export enum View {
   JOURNEY = 'journey',
   KNOWLEDGE_BASE = 'knowledge_base',
   TOOLS = 'tools',
-  UTM_GENERATOR = 'utm_generator', // Novo Item
+  UTM_GENERATOR = 'utm_generator',
   TRAINING = 'training',
   AI_ASSISTANT = 'ai_assistant',
-  ADMIN = 'admin'
+  ADMIN = 'admin',
+  LOGIN = 'login',
+  NOT_FOUND = 'not_found'
 }
 
 export interface ChatMessage {

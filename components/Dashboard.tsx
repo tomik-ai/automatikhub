@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { View, SOP, OnboardingStep } from '../types';
 import { ArrowRight, Calendar, FileText, ExternalLink, MessageCircle, Target, Bot, CheckCircle } from 'lucide-react';
@@ -130,46 +131,32 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, recentSOPs, pending
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
          <div 
            onClick={() => window.open('https://chat.whatsapp.com/I8s0tklYWFmEug3xtu97AS', '_blank')}
-           className="bg-[#0B1120] p-4 rounded-xl border border-white/5 hover:border-green-500/50 transition-all cursor-pointer flex items-center gap-4 group backdrop-blur-sm relative overflow-hidden focus:outline-none"
+           className="bg-[#0B1120] p-6 rounded-xl border border-white/5 hover:border-green-500/50 transition-all cursor-pointer flex items-center gap-4 group backdrop-blur-sm relative overflow-hidden focus:outline-none"
          >
            <div className="absolute inset-0 bg-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-           <div className="w-10 h-10 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500 shadow-[0_0_10px_rgba(34,197,94,0.1)] group-hover:shadow-[0_0_15px_rgba(34,197,94,0.3)] transition-all">
-             <MessageCircle size={20} />
+           <div className="w-12 h-12 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500 shadow-[0_0_10px_rgba(34,197,94,0.1)] group-hover:shadow-[0_0_15px_rgba(34,197,94,0.3)] transition-all">
+             <MessageCircle size={24} />
            </div>
            <div className="relative z-10">
-             <p className="font-bold text-sm text-slate-200 group-hover:text-white tracking-wide">WHATSAPP</p>
-             <p className="text-[10px] text-slate-500 uppercase tracking-wider">Comunicação</p>
+             <p className="font-bold text-base text-slate-200 group-hover:text-white tracking-wide">WHATSAPP</p>
+             <p className="text-xs text-slate-500 uppercase tracking-wider">Comunicação Oficial</p>
            </div>
          </div>
          
          <div 
            onClick={() => window.open('https://app.clickup.com/9013437304/home', '_blank')}
-           className="bg-[#0B1120] p-4 rounded-xl border border-white/5 hover:border-violet-500/50 transition-all cursor-pointer flex items-center gap-4 group backdrop-blur-sm relative overflow-hidden focus:outline-none"
+           className="bg-[#0B1120] p-6 rounded-xl border border-white/5 hover:border-violet-500/50 transition-all cursor-pointer flex items-center gap-4 group backdrop-blur-sm relative overflow-hidden focus:outline-none"
          >
            <div className="absolute inset-0 bg-violet-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-           <div className="w-10 h-10 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.1)] group-hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all">
-             <Target size={20} />
+           <div className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.1)] group-hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all">
+             <Target size={24} />
            </div>
            <div className="relative z-10">
-             <p className="font-bold text-sm text-slate-200 group-hover:text-white tracking-wide">CLICKUP</p>
-             <p className="text-[10px] text-slate-500 uppercase tracking-wider">Gestão</p>
-           </div>
-         </div>
-         
-         <div 
-           onClick={() => onChangeView(View.AI_ASSISTANT)}
-           className="bg-[#0B1120] p-4 rounded-xl border border-white/5 hover:border-cyan-500/50 transition-all cursor-pointer flex items-center gap-4 md:col-span-2 group backdrop-blur-sm relative overflow-hidden focus:outline-none"
-         >
-           <div className="absolute inset-0 bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-           <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.1)] group-hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all">
-             <Bot size={20} />
-           </div>
-           <div className="relative z-10">
-             <p className="font-bold text-sm text-slate-200 group-hover:text-white tracking-wide">AUTOMATIK AI</p>
-             <p className="text-[10px] text-slate-500 uppercase tracking-wider">Assistente Inteligente</p>
+             <p className="font-bold text-base text-slate-200 group-hover:text-white tracking-wide">CLICKUP</p>
+             <p className="text-xs text-slate-500 uppercase tracking-wider">Gestão de Projetos</p>
            </div>
          </div>
       </div>
